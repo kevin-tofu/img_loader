@@ -44,13 +44,13 @@ The images are comming from Flicker, and Licenses are all different based on eac
 
 ### COCO 2014
 
-####    Train data
+#### - Train data
   Number of images : 82783  
   Numberof images on each licenses :  
     {1: 23136, 2: 11651, 3: 22227, 4: 13559, 5: 7754, 6: 4030, 7: 426, 8: 0}  
 
 
-####    Validation data
+#### - Validation data
   Number of images : 40504  
   Numberof images on each licenses :  
     {1: 11173, 2: 5376, 3: 11371, 4: 6768, 5: 3564, 6: 2208, 7: 44, 8: 0}
