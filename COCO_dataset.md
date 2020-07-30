@@ -12,26 +12,19 @@ The images are comming from Flicker, and Licenses are all different based on eac
 ### COCO 2017
  
   - Attribution-NonCommercial-ShareAlike License  
-  http://creativecommons.org/licenses/by-nc-sa/2.0/
-
+    http://creativecommons.org/licenses/by-nc-sa/2.0/
   - Attribution-NonCommercial License  
   http://creativecommons.org/licenses/by-nc/2.0/
-
   - Attribution-NonCommercial-NoDerivs License  
     http://creativecommons.org/licenses/by-nc-nd/2.0/
-
   - Attribution License  
     http://creativecommons.org/licenses/by/2.0/
-
   - Attribution-ShareAlike License  
     http://creativecommons.org/licenses/by-sa/2.0/
-
   - Attribution-NoDerivs License
     http://creativecommons.org/licenses/by-nd/2.0/
-
   - No known copyright restrictions
     http://flickr.com/commons/usage/
-
   - United States Government Work
     http://www.usa.gov/copyright.shtml
 
