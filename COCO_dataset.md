@@ -29,9 +29,9 @@ The images are comming from Flicker, and Licenses are all different based on eac
     http://www.usa.gov/copyright.shtml
 
 #### Train data
-  Numbers of data : 118287
+  Numbers of data : 118287  
   {1: 32878, 2: 16397, 3: 32184, 4: 19470, 5: 10901, 6: 5992, 7: 465, 8: 0}  
 
 #### Validation data
-  Numbers of data : 5000
+  Numbers of data : 5000  
   {1: 1431, 2: 630, 3: 1414, 4: 857, 5: 417, 6: 246, 7: 5, 8: 0}
