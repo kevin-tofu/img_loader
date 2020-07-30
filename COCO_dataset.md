@@ -70,10 +70,10 @@ The images are comming from Flicker, and Licenses are all different based on eac
   Numberof images on each licenses :  
     {1: 11173, 2: 5376, 3: 11371, 4: 6768, 5: 3564, 6: 2208, 7: 44, 8: 0}  
     
-    images[4-8] = 12584  
+  images[4-8] = 12584  
     
-    Number of ALL Bodies : 50197  
-    Number of Bodies under free license : 15418  
+  Number of ALL Bodies : 50197  
+  Number of Bodies under free license : 15418  
     
     
     
