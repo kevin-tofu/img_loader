@@ -76,6 +76,7 @@ Number of Bodies under free license : 32876
 #### - Validation data
   Number of images : 40504  
   Numberof images on each licenses :  
+  
 |Type of License|1|2|3|4|5|6|7|8|
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 ||11173|5376|11371|6768|3564|2208|44|0|  
