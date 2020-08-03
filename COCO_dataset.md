@@ -36,11 +36,10 @@ The images are comming from Flicker, and Licenses are all different based on eac
   Number of images on each licenses :  
     {1: 32878, 2: 16397, 3: 32184, 4: 19470, 5: 10901, 6: 5992, 7: 465, 8: 0}  
 
-  |1|2|3|4|5|6|7|8|
-  |:---|:---|:---|:---|:---|:---|:---|:---|
-  |32878|16397|32184|19470|10901|5992|465|0|  
-　
-　　
+|1|2|3|4|5|6|7|8|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|32878|16397|32184|19470|10901|5992|465|0|  
+
 images[4-8] = 36828
   
 Number of ALL Bodies : 149813  
@@ -51,11 +50,15 @@ Number of Bodies under free license : 46324
   Numbers of data : 5000  
   Numberof images on each licenses :  
     {1: 1431, 2: 630, 3: 1414, 4: 857, 5: 417, 6: 246, 7: 5, 8: 0}
-    
-  images[4-8] = 1525  
+
+|1|2|3|4|5|6|7|8|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|1431|630|1414|857|417|246|5|0|  
+
+images[4-8] = 1525  
   
-  Number of ALL Bodies : 6352  
-  Number of Bodies under free license : 1970  
+Number of ALL Bodies : 6352  
+Number of Bodies under free license : 1970  
   
 
 ### COCO 2014
