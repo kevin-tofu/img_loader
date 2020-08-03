@@ -41,10 +41,10 @@ The images are comming from Flicker, and Licenses are all different based on eac
   |32878|16397|32184|19470|10901|5992|465|0|  
 　
 　　
-    images[4-8] = 36828
+images[4-8] = 36828
   
-  Number of ALL Bodies : 149813  
-  Number of Bodies under free license : 46324  
+Number of ALL Bodies : 149813  
+Number of Bodies under free license : 46324  
   
   
 #### - Validation data
