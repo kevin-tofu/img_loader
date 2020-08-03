@@ -66,22 +66,28 @@ Number of Bodies under free license : 1970
 #### - Train data
   Number of images : 82783  
   Numberof images on each licenses :  
-    {1: 23136, 2: 11651, 3: 22227, 4: 13559, 5: 7754, 6: 4030, 7: 426, 8: 0}  
   
-  images[4-8] = 25769  
-  
-  Number of ALL Bodies : 105968  
-  Number of Bodies under free license : 32876  
+|1|2|3|4|5|6|7|8|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|23136|11651|22227|13559|7754|4030|426|0|  
+
+images[4-8] = 25769  
+Number of ALL Bodies : 105968  
+Number of Bodies under free license : 32876  
 
 #### - Validation data
   Number of images : 40504  
   Numberof images on each licenses :  
     {1: 11173, 2: 5376, 3: 11371, 4: 6768, 5: 3564, 6: 2208, 7: 44, 8: 0}  
     
-  images[4-8] = 12584  
-    
-  Number of ALL Bodies : 50197  
-  Number of Bodies under free license : 15418  
+|1|2|3|4|5|6|7|8|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|11173|5376|11371|6768|3564|2208|44|0|  
+
+images[4-8] = 12584  
+  
+Number of ALL Bodies : 50197  
+Number of Bodies under free license : 15418  
     
     
     
