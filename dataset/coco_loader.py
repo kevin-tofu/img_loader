@@ -38,6 +38,7 @@ class coco_base(data_loader.base_bbox):
             raise ValueError("choose from [all, commercial]")
     
     def get_ids_image(self):
+
         if self.__ids_image_form == "all":
             ret = self.coco.getImgIds()
         elif self.__ids_image_form == "commercial":
@@ -51,6 +52,8 @@ class coco_base(data_loader.base_bbox):
         return ret
 
     def initialize_dataset(self):
+
+        self.get_ids_image()
         self.indeces_batchs = self.get_indeces_batches()
 
     def __next__(self):
