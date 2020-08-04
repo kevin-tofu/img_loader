@@ -21,7 +21,8 @@ class coco_base(data_loader.base_bbox):
         self.n_class = cfg.NUM_CLASSES
         self.coco = None
         self.form = "icxywh_normalized"
-        self.ids_image_form = "all"
+        #self.ids_image_form = "all"
+        self.ids_image_form = cfg.IDS
 
     @property
     def ids_image_form(self):
@@ -388,7 +389,7 @@ if __name__ == '__main__':
         cfg.PATH = '/data/public_data/COCO2017/'
         coco = coco2017
 
-
+    cfg.IDS = 'all'
     cfg.BATCHSIZE = 30
     cfg.NUM_CLASSES = 91
     
