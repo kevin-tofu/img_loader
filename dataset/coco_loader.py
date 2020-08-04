@@ -9,11 +9,9 @@ from skimage import io
 if __name__ == '__main__':
     import data_loader
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from utils import utils
 else:
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
     from dataset import data_loader
-    from utils import utils
 
 class coco_base(data_loader.base_bbox):
 
