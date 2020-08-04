@@ -15,7 +15,7 @@ else:
 
 class coco_base(data_loader.base_bbox):
 
-    def __init__(self, cfg, data='train', transformer = None):
+    def __init__(self, cfg, data='train', transformer = None, name="2014"):
 
         super(coco_base, self).__init__(cfg, transformer)
         self.n_class = cfg.NUM_CLASSES
@@ -23,6 +23,30 @@ class coco_base(data_loader.base_bbox):
         self.form = "icxywh_normalized"
         #self.ids_image_form = "all"
         self.ids_image_form = cfg.IDS
+
+        self.fileloader(cfg, data, transformer, name)
+
+    def fileloader(self, cfg, data, transformer, name):
+
+        dataDir = cfg.PATH
+
+        self._exception_ids = ['']
+        self.dataType = data + name
+        self.img_dir = dataDir + '/images/' + self.dataType + '/'
+        prefix = 'instances'
+        annFile = '%s/annotations/%s_%s.json'%(dataDir, prefix, self.dataType)
+        print(dataDir, prefix, self.dataType)
+        print(annFile)
+        self.coco = COCO(annFile)
+        #self.ids_img = self.coco.getImgIds()
+        self.ids_img = self.get_ids_image()
+
+        if data == 'train' or data == 'val' or data == 'test':
+            self.num_data = len(self.ids_img)
+        elif data == 'check':
+            self.num_data = 500
+
+        self.indeces_batchs = self.get_indeces_batches()
 
     @property
     def ids_image_form(self):
@@ -131,80 +155,17 @@ class coco_base(data_loader.base_bbox):
 
 
 class coco2014(coco_base):
-
     name = 'coco2014'
     use = 'localization'
-
     def __init__(self, cfg, data='train', transformer=None):
-
-        super(coco2014, self).__init__(cfg, data, transformer)
-        dataDir = cfg.PATH
-
-        self._exception_ids = ['']
-        if data == 'train':
-            self.dataType = 'train2014'
-
-        elif data == 'val':
-            self.dataType = 'val2014'
-
-        elif data == 'test':
-            self.dataType = 'test2014'
-        
-        elif data == 'check':
-            self.dataType = 'val2014'
-            self.num_data = 500
-
-        self.img_dir = dataDir + '/images/' + self.dataType + '/'
-        #prefix = 'person_keypoints'
-        prefix = 'instances'
-        annFile = '%sannotations/%s_%s.json'%(dataDir, prefix, self.dataType)
-        #fname = cfg.PATH + "annotations/person_keypoints_" + dtype + "2014.json"
-        
-        self.coco = COCO(annFile)
-        self.ids_img = self.get_ids_image()
-        if data == 'train' or data == 'val' or data == 'test':
-            self.num_data = len(self.ids_img)
-
-        self.indeces_batchs = self.get_indeces_batches()
-
+        super(coco2014, self).__init__(cfg, data, transformer, name="2014")
 
 class coco2017(coco_base):
-
     name = 'coco2017'
     use = 'localization'
-
     def __init__(self, cfg, data='train', transformer=None):
-
-        super(coco2017, self).__init__(cfg, data, transformer)
-        dataDir = cfg.PATH
-
-        self._exception_ids = ['']
-        if data == 'train':
-            self.dataType = 'train2017'
-            
-        elif data == 'val':
-            self.dataType = 'val2017'
-
-        elif data == 'test':
-            self.dataType = 'test2017'
+        super(coco2017, self).__init__(cfg, data, transformer, name="2017")
         
-        elif data == 'check':
-            self.dataType = 'val2017'
-            self.num_data = 500
-
-        self.img_dir = dataDir + '/images/' + self.dataType + '/'
-        prefix = 'instances'
-        annFile = '%s/annotations/%s_%s.json'%(dataDir, prefix, self.dataType)
-        print(dataDir, prefix, self.dataType)
-        print(annFile)
-
-        self.coco = COCO(annFile)
-        #self.ids_img = self.coco.getImgIds()
-        self.ids_img = self.get_ids_image()
-        if data == 'train' or data == 'val' or data == 'test':
-            self.num_data = len(self.ids_img)
-
-        self.indeces_batchs = self.get_indeces_batches()
 
 
 def draw_box(img, target, fmt="xywhc"):
@@ -381,8 +342,8 @@ if __name__ == '__main__':
     from dataset.augmentator import get_compose
 
     cfg = edict()
-    #if True:
-    if False:
+    if True:
+    #if False:
         cfg.PATH = '/data/public_data/COCO2014/'
         coco = coco2014
     else:
