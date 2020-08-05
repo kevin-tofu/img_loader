@@ -13,27 +13,26 @@ else:
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
     from dataset import data_loader
 
-class coco_base(data_loader.base_bbox):
+
+class coco_base(data_loader.base_augmentation):
 
     def __init__(self, cfg, data='train', transformer = None, name="2014"):
-
         super(coco_base, self).__init__(cfg, transformer)
+        self.data_dir = cfg.PATH
         self.n_class = cfg.NUM_CLASSES
         self.coco = None
-        self.form = "icxywh_normalized"
-        #self.ids_image_form = "all"
-        self.ids_image_form = cfg.IDS
+        self.ids_image_form = cfg.IDS#'all', ''
+        if self.prefix == 'instances':
+            self.get_annotation = self.get_bbox
+        elif self.prefix == 'person_keypoints':
+            self.get_annotation = self.get_keypoints
 
         self.pycocoloader(cfg, data, transformer, name)
         self.initialize_dataset()
-        #self.indeces_batchs = self.get_indeces_batches()
-
+        
     def pycocoloader(self, cfg, data, transformer, name):
 
-        self.data_dir = cfg.PATH
-        self.exception_ids = ['']
         self.dataType = self.get_datatype(data, name) # train2014
-        self.prefix = cfg.ANNTYPE
         self.img_dir = self.data_dir + '/images/' + self.dataType + '/'
         self.annfname = '%s/annotations/%s_%s.json'%(self.data_dir, self.prefix, self.dataType)
 
@@ -44,8 +43,17 @@ class coco_base(data_loader.base_bbox):
 
         if data == 'train' or data == 'val' or data == 'test':
             self.num_data = len(self.ids_img)
+            #self.exception_ids = ['']
         elif data == 'check':
             self.num_data = 500
+
+    def initialize_dataset(self):
+        self.get_ids_image()
+        self.initialize_loader()
+
+    def initialize_loader(self):
+        self.__loop = 0
+        self.indeces_batchs = self.get_indeces_batches()
 
     def get_datatype(self, data, name):
         if data == 'check':
@@ -53,20 +61,6 @@ class coco_base(data_loader.base_bbox):
         else:
             return data + name
 
-    @property
-    def prefix(self):
-        return self.__prefix
-
-    @prefix.setter
-    def prefix(self, v):
-        self.__prefix = 'instances'
-        if v == "bbox":
-            self.__prefix = 'instances'
-        elif v == "pose":
-            self.__prefix = 'person_keypoints'
-        elif v == "captions":
-            self.__prefix = 'captions'
-        
     @property
     def ids_image_form(self):
         return self.__ids_image
@@ -95,27 +89,15 @@ class coco_base(data_loader.base_bbox):
                     ret.append(_id)
         return ret
 
-    def initialize_dataset(self):
-        self.get_ids_image()
-        self.initialize_loader()
-
-    def initialize_loader(self):
-        self.__loop = 0
-        self.indeces_batchs = self.get_indeces_batches()
-
-    def next_bbox(self):
+    def __next__(self):
         if self.__loop >= len(self.indeces_batchs):
             self.initialize_loader()
             raise StopIteration()
-
         _ids = self.indeces_batchs[self.__loop]
         img_list, target_list = self.load_bbox(_ids)
         self.__loop += 1
         return [img_list, target_list]
 
-    def __next__(self):
-        return self.next_bbox()
-    
 
     def __len__(self):#length of mini-batches
         return self.num_data // self.batchsize
@@ -124,12 +106,34 @@ class coco_base(data_loader.base_bbox):
         nms = [str(i+1) for i in range(self.n_class)]
         return nms
 
+    def get_bbox(self, ann):
+
+        if len(ann['bbox']) == 0:
+            print("NO BOX")
+            return None
+        if ann['category_id'] >= self.n_class:
+            print('category_id : ', ann['category_id'])
+            return None
+        x1 = float(ann['bbox'][0])
+        y1 = float(ann['bbox'][1])
+        w = float(ann['bbox'][2])
+        h = float(ann['bbox'][3])
+        return [x1, y1, w, h, ann['category_id']]
+
+    def get_keypoints(self, ann):
+
+        if ann['num_keypoints'] == 0:
+            print("NO keypoints")
+            return None
+        joints = np.array(ann['keypoints']).reshape((-1, 3))
+        print(ann['keypoints'], ann['num_keypoints'], joints.shape)
+        return joints
+
     def load_bbox(self, _ids):
         #https://pytorch.org/docs/stable/_modules/torchvision/datasets/coco.html#CocoDetection
         img_list = []
         target_list = []
         for i, _v in enumerate(_ids):
-            
             #img
             img_id = self.ids_img[_v]
             img_name = self.coco.imgs[img_id]['file_name']
@@ -148,25 +152,15 @@ class coco_base(data_loader.base_bbox):
             ann_ids = self.coco.getAnnIds(imgIds=img_id)
             anns = self.coco.loadAnns(ann_ids)
             target = []
+
             if len(anns) == 0:
                 continue
-
             for ann in anns:
-                #print(ann)
-                if len(ann['bbox']) == 0:
-                    print("NO BOX")
+                ret = self.get_annotation(ann)
+                if ret is None:
                     continue
-
-                if ann['category_id'] >= self.n_class:
-                    print('category_id : ', ann['category_id'])
-                    continue
-
-                x1 = float(ann['bbox'][0])
-                y1 = float(ann['bbox'][1])
-                w = float(ann['bbox'][2])
-                h = float(ann['bbox'][3])
-                target.append([x1, y1, w, h, ann['category_id']])
-
+                else:
+                    target.append(ret)
             if len(target) == 0:
                 continue
 
@@ -182,12 +176,14 @@ class coco2014(coco_base):
     name = 'coco2014'
     use = 'localization'
     def __init__(self, cfg, data='train', transformer=None):
+        self.year = "2014"
         super(coco2014, self).__init__(cfg, data, transformer, name="2014")
 
 class coco2017(coco_base):
     name = 'coco2017'
     use = 'localization'
     def __init__(self, cfg, data='train', transformer=None):
+        self.year = "2017"
         super(coco2017, self).__init__(cfg, data, transformer, name="2017")
         
 
@@ -247,7 +243,6 @@ def test_bbox(cfg, coco, compose=None):
     mpl.use('Agg')
     import pylab as pl
 
-
     data = coco(cfg, 'check', compose)
     data.form = "x1y1whc"
 
@@ -268,8 +263,6 @@ def test_bbox(cfg, coco, compose=None):
             pl.clf()
             pl.imshow(c_box)
             pl.savefig(fname)
-
-
 
 def test_loader(cfg, coco, compose=None):
 
@@ -324,14 +317,13 @@ def test_licence(cfg, coco, compose):
 #print(len(cc.anns[_id]['keypoints']))#51
 #print(cc.anns[_id]['num_keypoints'])
 """
-def test_annotations(cfg, coco, compose):
+def test_annotations(cfg, coco, compose, year):
     
     print("Check Annotations on images")
 
     for dtype in ["train", "val"]:
 
-        fname = cfg.PATH + "annotations/person_keypoints_" + dtype + "2017.json"
-        #fname = cfg.PATH + "annotations/person_keypoints_" + dtype + "2014.json"
+        fname = cfg.PATH + "annotations/person_keypoints_" + dtype + year + ".json"
         cc = COCO(fname)
         
         # earn ids under free licences
@@ -357,6 +349,18 @@ def test_annotations(cfg, coco, compose):
         print("-------------------------------------")
 
 
+def test_keypoints(cfg, coco, compose):
+    
+    #cfg.ANNTYPE = 'bbox'
+    cfg.ANNTYPE = 'pose'
+    for dtype in ["train", "val"]:
+        data_ = coco(cfg, dtype, None)
+        for i, (img, anns) in enumerate(data_):
+            print(np.array(anns).shape)
+            #print(anns)
+        
+
+
 if __name__ == '__main__':
 
     print("start")
@@ -367,13 +371,16 @@ if __name__ == '__main__':
     cfg = edict()
     #if True:
     if False:
+        year = '2014'
         cfg.PATH = '/data/public_data/COCO2014/'
         coco = coco2014
     else:
+        year = '2017'
         cfg.PATH = '/data/public_data/COCO2017/'
         coco = coco2017
 
     cfg.ANNTYPE = 'bbox'
+    
     cfg.IDS = 'all'
     cfg.BATCHSIZE = 30
     cfg.NUM_CLASSES = 91
@@ -396,10 +403,11 @@ if __name__ == '__main__':
                           hue_shift, saturation_shift, value_shift, fmt)
     #compose = None
 
-    test_bbox(cfg, coco, compose)
+    #test_bbox(cfg, coco, compose)
     #test_loader(cfg, coco, compose)
     #test_licence(cfg, coco, compose)    
-    #test_annotations(cfg, coco, compose)
+    #test_annotations(cfg, coco, compose, year)
+    test_keypoints(cfg, coco, compose)
 
 
     print("end")

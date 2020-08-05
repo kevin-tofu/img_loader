@@ -43,10 +43,33 @@ class base(object):
     def __next__(self):
         NotImplementedError()
 
-class base_bbox(base):
+
+class base_augmentation(base):
 
     def __init__(self, cfg, transformer=None):
-        super(base_bbox, self).__init__(cfg, transformer)
+        super(base_augmentation, self).__init__(cfg, transformer)
+        self.prefix = cfg.ANNTYPE#
+        self.form = "icxywh_normalized"
+
+    @property
+    def prefix(self):
+        return self.__prefix
+
+    @prefix.setter
+    def prefix(self, v):
+        self.__prefix = 'instances'
+        if v == "bbox":
+            self.__prefix = 'instances'
+            self.raw_transform = self.raw_bbox
+            self.augumentation_albumentations = self.augumentation_bbox
+            self.format = self.format_bbox
+        elif v == "pose":
+            self.__prefix = 'person_keypoints'
+            self.raw_transform = self.raw_keypoints
+            self.augumentation_albumentations = self.augumentation_keypoints
+            self.format = self.format_keypoints
+        elif v == "captions":
+            self.__prefix = 'captions'
 
     @property
     def form(self):
@@ -66,23 +89,74 @@ class base_bbox(base):
             self.__form = "icxywh_normalized"
             raise ValueError("choose from [icxywh_normalized, x1y1whc, xywhc, xywhc_normalized]")
 
-    def augumentation_albumentations(self, img, label):
+    def raw_bbox(self, img, label):
+        return (img, np.array(label[:, 0:4]), np.array(label[:, 4:]))
+
+    def augumentation_bbox(self, img, label):
         
         #print(label, img.shape, "raw")
         # !!! caution : TODO
         label[:, 2:4] = np.clip(label[:, 2:4], 0.1, 416 - 0.1) 
-        #label[:, 2:3] = np.clip(label[2:3], 0.1, img.shape[1] - label[:, 0:1] - 0.1)
-        #label[:, 3:4] = np.clip(label[3:4], 0.1, img.shape[0] - label[:, 1:2] - 0.1)
         annotation = {'image': img, 'bboxes': label[:, 0:4], 'category_id': label[:, 4]}
+
         augmented = self.transformer(**annotation)
         img_trans = augmented['image']
+
         x1y1wh_trans = np.array(augmented['bboxes'])
-        
         # !!! caution : TODO
         x1y1wh_trans = np.clip(x1y1wh_trans, 0, 415.9) 
-
         id_trans = np.array(augmented['category_id'])[:, np.newaxis]
-        return img_trans, x1y1wh_trans, id_trans
+
+        if len(x1y1wh_trans) == 0:
+            return None
+        return (img_trans, x1y1wh_trans, id_trans)
+
+    def raw_keypoints(self, img, keypoints):
+        return (img, keypoints[:, 0:2], keypoints[:, 2:])
+
+    def augumentation_keypoints(self, img, keypoints):
+        
+        # !!! caution : TODO
+        keypoints[:, 0:2] = np.clip(keypoints[:, 0:2], 0.1, 416 - 0.1) 
+        annotation = {'image': img, 'keypoints':keypoints[:, 0:2]}
+
+        augmented = self.transformer(**annotation)
+        img_trans = augmented['image']
+        keypoints_trans = np.array(augmented['keypoints'])
+        # !!! caution : TODO
+        #keypoints_trans = np.clip(keypoints_trans, 0, 415.9) 
+        if len(keypoints_trans) == 0:
+            return None
+        return (img_trans, keypoints_trans, keypoints[:, 2:])
+
+    def format_bbox(self, b, data_trans, ret_targets):
+
+        img_trans, x1y1wh_trans, id_trans = data_trans
+
+        if self.__form == "icxywh_normalized":
+            b_trans = b * np.ones((x1y1wh_trans.shape[0], 1))
+            xywh_trans = x1y1wh_trans / img_trans.shape[0]
+            xywh_trans[:, 0:2] += xywh_trans[:, 2:4] / 2.
+            label_trans = np.concatenate((b_trans, id_trans, xywh_trans), 1).tolist()
+            ret_targets += label_trans
+        else:
+            if self.__form == "x1y1whc":
+                label_trans = np.concatenate((x1y1wh_trans, id_trans), 1).tolist()
+            elif self.__form == "xywhc":
+                xywh_trans = np.copy(x1y1wh_trans)
+                xywh_trans[:, 0:2] += xywh_trans[:, 2:4] / 2.
+                label_trans = np.concatenate((xywh_trans, id_trans), 1).tolist()
+            elif self.__form == "xywhc_normalized":
+                xywh_trans = x1y1wh_trans / img_trans.shape[0]
+                xywh_trans[:, 0:2] += xywh_trans[:, 2:4] / 2.
+                label_trans = np.concatenate((xywh_trans, id_trans), 1).tolist()
+            ret_targets.append(label_trans)
+
+    def format_keypoints(self, b, data_trans, ret_targets):
+
+        keypoints, valid = data_trans[1], data_trans[2]
+
+        ret_targets.append(np.concatenate((keypoints, valid), 1))
 
 
     def transform(self, images, targets):
@@ -100,39 +174,17 @@ class base_bbox(base):
 
             if self.transformer is not None:
                 # augumentation by albumentations
-                img_trans, x1y1wh_trans, id_trans = self.augumentation_albumentations(img, label)
+                outputs = self.augumentation_albumentations(img, label)
             else:
                 # without augumentation
-                img_trans = img
-                x1y1wh_trans = np.array(label[:, 0:4])
-                id_trans = np.array(label[:, 4:])
+                outputs = self.raw_transform(img, label)
 
-            if len(x1y1wh_trans) == 0:
+            if outputs is None:
                 continue
 
-            ret_images.append(img_trans)
-            if self.__form == "icxywh_normalized":
-                b_trans = b * np.ones((x1y1wh_trans.shape[0], 1))
-                xywh_trans = x1y1wh_trans / img_trans.shape[0]
-                xywh_trans[:, 0:2] += xywh_trans[:, 2:4] / 2.
-                label_trans = np.concatenate((b_trans, id_trans, xywh_trans), 1).tolist()
-                ret_targets += label_trans
-                
-            elif self.__form == "x1y1whc":
-                label_trans = np.concatenate((x1y1wh_trans, id_trans), 1).tolist()
-                ret_targets.append(label_trans)
-
-            elif self.__form == "xywhc":
-                xywh_trans = np.copy(x1y1wh_trans)
-                xywh_trans[:, 0:2] += xywh_trans[:, 2:4] / 2.
-                label_trans = np.concatenate((xywh_trans, id_trans), 1).tolist()
-                ret_targets.append(label_trans)
-
-            elif self.__form == "xywhc_normalized":
-                xywh_trans = x1y1wh_trans / img_trans.shape[0]
-                xywh_trans[:, 0:2] += xywh_trans[:, 2:4] / 2.
-                label_trans = np.concatenate((xywh_trans, id_trans), 1).tolist()
-                ret_targets.append(label_trans)
+            ret_images.append(outputs[0])
+            self.format(b, outputs, ret_targets)
+            
             b += 1
 
         return ret_images, ret_targets
