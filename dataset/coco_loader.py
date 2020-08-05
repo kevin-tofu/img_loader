@@ -28,11 +28,12 @@ class coco_base(data_loader.base_bbox):
 
     def pycocoloader(self, cfg, data, transformer, name):
 
-        self.__data_dir = cfg.PATH
-        self.__exception_ids = ['']
-        self.__dataType = data + name # train2014
-        self.__img_dir = self.data_dir + '/images/' + self.dataType + '/'
-        self.__annfname = '%s/annotations/%s_%s.json'%(self.__data_dir, self.__prefix, self.__dataType)
+        self.data_dir = cfg.PATH
+        self.exception_ids = ['']
+        self.dataType = data + name # train2014
+        self.prefix = cfg.ANNTYPE
+        self.img_dir = self.data_dir + '/images/' + self.dataType + '/'
+        self.annfname = '%s/annotations/%s_%s.json'%(self.data_dir, self.prefix, self.dataType)
 
         print(self.annfname)
         self.coco = COCO(self.annfname)
