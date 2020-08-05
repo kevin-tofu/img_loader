@@ -30,7 +30,7 @@ class coco_base(data_loader.base_bbox):
 
         self.data_dir = cfg.PATH
         self.exception_ids = ['']
-        self.dataType = data + name # train2014
+        self.dataType = self.get_datatype(data, name) # train2014
         self.prefix = cfg.ANNTYPE
         self.img_dir = self.data_dir + '/images/' + self.dataType + '/'
         self.annfname = '%s/annotations/%s_%s.json'%(self.data_dir, self.prefix, self.dataType)
@@ -47,6 +47,12 @@ class coco_base(data_loader.base_bbox):
 
         self.indeces_batchs = self.get_indeces_batches()
 
+    def get_datatype(self, data, name):
+        if data == 'check':
+            return 'val' + name
+        else:
+            return data + name
+
     @property
     def prefix(self):
         return self.__prefix
@@ -56,10 +62,13 @@ class coco_base(data_loader.base_bbox):
         self.__prefix = 'instances'
         if v == "bbox":
             self.__prefix = 'instances'
+            self. __next__ = self.next_bbox
         elif v == "pose":
             self.__prefix = 'person_keypoints'
+            self. __next__ = self.next_bbox
         elif v == "captions":
             self.__prefix = 'captions'
+            self. __next__ = self.next_bbox
         
     @property
     def ids_image_form(self):
@@ -94,26 +103,29 @@ class coco_base(data_loader.base_bbox):
         self.get_ids_image()
         self.indeces_batchs = self.get_indeces_batches()
 
-    def __next__(self):
-
+    def next_bbox(self):
         if self._loop >= len(self.indeces_batchs):
             self._loop = 0
             self.initialize_dataset()
             raise StopIteration()
 
         _ids = self.indeces_batchs[self._loop]
-        img_list, target_list = self.load(_ids)
+        img_list, target_list = self.load_bbox(_ids)
         self._loop += 1
         return [img_list, target_list]
 
-    def __len__(self):
+    #def __next__(self):
+    #    return self.next_bbox()
+    
+
+    def __len__(self):#length of mini-batches
         return self.num_data // self.batchsize
 
     def categories(self):
         nms = [str(i+1) for i in range(self.n_class)]
         return nms
 
-    def load(self, _ids):
+    def load_bbox(self, _ids):
         #https://pytorch.org/docs/stable/_modules/torchvision/datasets/coco.html#CocoDetection
         img_list = []
         target_list = []
@@ -355,8 +367,8 @@ if __name__ == '__main__':
     from dataset.augmentator import get_compose
 
     cfg = edict()
-    if True:
-    #if False:
+    #if True:
+    if False:
         cfg.PATH = '/data/public_data/COCO2014/'
         coco = coco2014
     else:
@@ -386,9 +398,9 @@ if __name__ == '__main__':
                           hue_shift, saturation_shift, value_shift, fmt)
     #compose = None
 
-    #test_bbox(cfg, coco, compose)
+    test_bbox(cfg, coco, compose)
     #test_loader(cfg, coco, compose)
-    test_licence(cfg, coco, compose)    
+    #test_licence(cfg, coco, compose)    
     #test_annotations(cfg, coco, compose)
 
 
