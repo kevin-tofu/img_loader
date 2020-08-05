@@ -52,13 +52,13 @@ class coco_base(data_loader.base_bbox):
 
     @prefix.setter
     def prefix(self, v):
-        self.prefix = 'instances'
+        self.__prefix = 'instances'
         if v == "bbox":
-            self.prefix = 'instances'
+            self.__prefix = 'instances'
         elif v == "pose":
-            self.prefix = 'person_keypoints'
+            self.__prefix = 'person_keypoints'
         elif v == "captions":
-            self.prefix = 'captions'
+            self.__prefix = 'captions'
         
     @property
     def ids_image_form(self):
