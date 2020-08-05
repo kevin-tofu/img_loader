@@ -25,6 +25,8 @@ class coco_base(data_loader.base_bbox):
         self.ids_image_form = cfg.IDS
 
         self.pycocoloader(cfg, data, transformer, name)
+        self.initialize_dataset()
+        #self.indeces_batchs = self.get_indeces_batches()
 
     def pycocoloader(self, cfg, data, transformer, name):
 
@@ -45,8 +47,6 @@ class coco_base(data_loader.base_bbox):
         elif data == 'check':
             self.num_data = 500
 
-        self.indeces_batchs = self.get_indeces_batches()
-
     def get_datatype(self, data, name):
         if data == 'check':
             return 'val' + name
@@ -62,13 +62,10 @@ class coco_base(data_loader.base_bbox):
         self.__prefix = 'instances'
         if v == "bbox":
             self.__prefix = 'instances'
-            self. __next__ = self.next_bbox
         elif v == "pose":
             self.__prefix = 'person_keypoints'
-            self. __next__ = self.next_bbox
         elif v == "captions":
             self.__prefix = 'captions'
-            self. __next__ = self.next_bbox
         
     @property
     def ids_image_form(self):
@@ -99,23 +96,25 @@ class coco_base(data_loader.base_bbox):
         return ret
 
     def initialize_dataset(self):
-
         self.get_ids_image()
+        self.initialize_loader()
+
+    def initialize_loader(self):
+        self.__loop = 0
         self.indeces_batchs = self.get_indeces_batches()
 
     def next_bbox(self):
-        if self._loop >= len(self.indeces_batchs):
-            self._loop = 0
-            self.initialize_dataset()
+        if self.__loop >= len(self.indeces_batchs):
+            self.initialize_loader()
             raise StopIteration()
 
-        _ids = self.indeces_batchs[self._loop]
+        _ids = self.indeces_batchs[self.__loop]
         img_list, target_list = self.load_bbox(_ids)
-        self._loop += 1
+        self.__loop += 1
         return [img_list, target_list]
 
-    #def __next__(self):
-    #    return self.next_bbox()
+    def __next__(self):
+        return self.next_bbox()
     
 
     def __len__(self):#length of mini-batches
@@ -250,8 +249,7 @@ def test_bbox(cfg, coco, compose=None):
 
 
     data = coco(cfg, 'check', compose)
-    data.initialize_dataset()
-    data.__form = "x1y1whc"
+    data.form = "x1y1whc"
 
     path = "./dataset/temp/"
     operator.remove_files(path)
@@ -266,7 +264,7 @@ def test_bbox(cfg, coco, compose=None):
         for ii, (c, t) in enumerate(zip(img, target)):
 
             fname = path + str(i*32 + ii) + ".jpg"
-            c_box = draw_box(c, t, data.__form)
+            c_box = draw_box(c, t, data.form)
             pl.clf()
             pl.imshow(c_box)
             pl.savefig(fname)

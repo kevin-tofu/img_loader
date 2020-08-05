@@ -41,14 +41,7 @@ class base(object):
         return self
 
     def __next__(self):
-
-        if self._loop >= len(self.indeces):
-            self._loop = 0
-            raise StopIteration()
-        
-        value = self.indeces[self._loop]
-        self._loop += 1
-        return value
+        NotImplementedError()
 
 class base_bbox(base):
 
