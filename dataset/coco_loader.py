@@ -24,20 +24,18 @@ class coco_base(data_loader.base_bbox):
         #self.ids_image_form = "all"
         self.ids_image_form = cfg.IDS
 
-        self.fileloader(cfg, data, transformer, name)
+        self.pycocoloader(cfg, data, transformer, name)
 
-    def fileloader(self, cfg, data, transformer, name):
+    def pycocoloader(self, cfg, data, transformer, name):
 
-        dataDir = cfg.PATH
+        self.__data_dir = cfg.PATH
+        self.__exception_ids = ['']
+        self.__dataType = data + name # train2014
+        self.__img_dir = self.data_dir + '/images/' + self.dataType + '/'
+        self.__annfname = '%s/annotations/%s_%s.json'%(self.__data_dir, self.__prefix, self.__dataType)
 
-        self._exception_ids = ['']
-        self.dataType = data + name
-        self.img_dir = dataDir + '/images/' + self.dataType + '/'
-        prefix = 'instances'
-        annFile = '%s/annotations/%s_%s.json'%(dataDir, prefix, self.dataType)
-        print(dataDir, prefix, self.dataType)
-        print(annFile)
-        self.coco = COCO(annFile)
+        print(self.annfname)
+        self.coco = COCO(self.annfname)
         #self.ids_img = self.coco.getImgIds()
         self.ids_img = self.get_ids_image()
 
@@ -48,6 +46,20 @@ class coco_base(data_loader.base_bbox):
 
         self.indeces_batchs = self.get_indeces_batches()
 
+    @property
+    def prefix(self):
+        return self.__prefix
+
+    @prefix.setter
+    def prefix(self, v):
+        self.prefix = 'instances'
+        if v == "bbox":
+            self.prefix = 'instances'
+        elif v == "pose":
+            self.prefix = 'person_keypoints'
+        elif v == "captions":
+            self.prefix = 'captions'
+        
     @property
     def ids_image_form(self):
         return self.__ids_image
@@ -350,6 +362,7 @@ if __name__ == '__main__':
         cfg.PATH = '/data/public_data/COCO2017/'
         coco = coco2017
 
+    cfg.ANNTYPE = 'bbox'
     cfg.IDS = 'all'
     cfg.BATCHSIZE = 30
     cfg.NUM_CLASSES = 91
