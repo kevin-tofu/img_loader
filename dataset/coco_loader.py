@@ -99,6 +99,8 @@ class coco_base(data_loader.base_augmentation):
             self.__ids_image_form = v
         elif v == "commercial":
             self.__ids_image_form = v
+        elif v == "custom1":
+            self.__ids_image_form = v
         else:
             self.__ids_image_form = "commercial"
             raise ValueError("choose from [all, commercial]")
