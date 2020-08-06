@@ -18,6 +18,8 @@ class coco_base(data_loader.base_augmentation):
 
     def __init__(self, cfg, data='train', transformer = None, name="2014"):
         super(coco_base, self).__init__(cfg, transformer)
+
+        self.__data = data
         self.data_dir = cfg.PATH
         self.n_class = cfg.NUM_CLASSES
         self.coco = None
@@ -32,20 +34,16 @@ class coco_base(data_loader.base_augmentation):
         
     def pycocoloader(self, cfg, data, transformer, name):
 
-        self.dataType = self.get_datatype(data, name) # train2014
-        self.img_dir = self.data_dir + '/images/' + self.dataType + '/'
-        self.annfname = '%s/annotations/%s_%s.json'%(self.data_dir, self.prefix, self.dataType)
+        self.dataName = self.get_dataName(data, name) # train2014
+        self.img_dir = self.data_dir + '/images/' + self.dataName + '/'
+        self.annfname = '%s/annotations/%s_%s.json'%(self.data_dir, self.prefix, self.dataName)
 
         print(self.annfname)
         self.coco = COCO(self.annfname)
         #self.ids_img = self.coco.getImgIds()
         self.get_ids_image()
 
-        if data == 'train' or data == 'val' or data == 'test':
-            self.num_data = len(self.ids_img)
-            #self.exception_ids = ['']
-        elif data == 'check':
-            self.num_data = 500
+        
 
     def initialize_dataset(self):
         self.get_ids_image()
@@ -54,7 +52,6 @@ class coco_base(data_loader.base_augmentation):
     def initialize_loader(self):
         self.__loop = 0
         self.indeces_batchs = self.get_indeces_batches()
-
 
     def get_ids_image(self):
 
@@ -71,19 +68,25 @@ class coco_base(data_loader.base_augmentation):
                     ret.append(_id)
         
         elif self.__ids_image_form == "custom1":
+            if self.__data == 'train':
+                _pickup = 500
+            elif self.__data == 'val' or self.__data == 'test':
+                _pickup = 100
+            elif self.__data == 'check':
+                _pickup = 1
             cats = self.coco.loadCats(self.coco.getCatIds())
             nms = [cat['name'] for cat in cats]
             ret = []
             for cat in nms:
                 catIds = self.coco.getCatIds(catNms=cat)
                 imgIds = self.coco.getImgIds(catIds=catIds)
-                idx = np.random.choice(len(imgIds), 100)
+                idx = np.random.choice(len(imgIds), _pickup)
                 ret += np.array(imgIds)[idx].tolist()
 
         self.ids_img = ret
         self.num_data = len(self.ids_img)
 
-    def get_datatype(self, data, name):
+    def get_dataName(self, data, name):
         if data == 'check':
             return 'val' + name
         else:
@@ -115,7 +118,6 @@ class coco_base(data_loader.base_augmentation):
         img_list, target_list = self.load_bbox(_ids)
         self.__loop += 1
         return [img_list, target_list]
-
 
     def __len__(self):#length of mini-batches
         return self.num_data // self.batchsize
@@ -406,6 +408,11 @@ def test_cocoapi(cfg, coco, compose, year):
     print(len(imgIds_2), "imgIds_2")
     print(len(imgIds_3), "imgIds_3")
     print(nms)
+
+    print(catIds_2)
+    annIds_2 = cc.getAnnIds(imgIds_2[0])
+    for ann in cc.loadAnns(annIds_2):
+        print(ann)
 
 
 if __name__ == '__main__':
