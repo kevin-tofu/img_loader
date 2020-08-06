@@ -80,8 +80,8 @@ class coco_base(data_loader.base_augmentation):
                 idx = np.random.choice(len(imgIds), 100)
                 ret += np.array(imgIds)[idx].tolist()
 
-        self.num_data = len(ret)
         self.ids_img = ret
+        self.num_data = len(self.ids_img)
 
     def get_datatype(self, data, name):
         if data == 'check':
@@ -130,8 +130,9 @@ class coco_base(data_loader.base_augmentation):
             print("NO BOX")
             return None
         if ann['category_id'] >= self.n_class:
-            print('category_id : ', ann['category_id'])
+            #print('category_id : ', ann['category_id'])
             return None
+
         x1 = float(ann['bbox'][0])
         y1 = float(ann['bbox'][1])
         w = float(ann['bbox'][2])
