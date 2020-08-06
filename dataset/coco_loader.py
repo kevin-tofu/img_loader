@@ -39,7 +39,7 @@ class coco_base(data_loader.base_augmentation):
         print(self.annfname)
         self.coco = COCO(self.annfname)
         #self.ids_img = self.coco.getImgIds()
-        self.ids_img = self.get_ids_image()
+        self.get_ids_image()
 
         if data == 'train' or data == 'val' or data == 'test':
             self.num_data = len(self.ids_img)
@@ -54,6 +54,34 @@ class coco_base(data_loader.base_augmentation):
     def initialize_loader(self):
         self.__loop = 0
         self.indeces_batchs = self.get_indeces_batches()
+
+
+    def get_ids_image(self):
+
+        if self.__ids_image_form == "all":
+            ret = self.coco.getImgIds()
+
+        elif self.__ids_image_form == "commercial":
+            #ret = self.coco.getImgIds()
+            ret = []
+            for _id in self.coco.getImgIds():
+                id_license = self.coco.imgs[_id]['license']
+                if id_license >= 4:
+                    #ret.append(cc.imgs[i]['id'])
+                    ret.append(_id)
+        
+        elif self.__ids_image_form == "custom1":
+            cats = self.coco.loadCats(self.coco.getCatIds())
+            nms = [cat['name'] for cat in cats]
+            ret = []
+            for cat in nms:
+                catIds = self.coco.getCatIds(catNms=cat)
+                imgIds = self.coco.getImgIds(catIds=catIds)
+                idx = np.random.choice(len(imgIds), 100)
+                ret += np.array(imgIds)[idx].tolist()
+
+        self.num_data = len(ret)
+        self.ids_img = ret
 
     def get_datatype(self, data, name):
         if data == 'check':
@@ -75,23 +103,11 @@ class coco_base(data_loader.base_augmentation):
             self.__ids_image_form = "commercial"
             raise ValueError("choose from [all, commercial]")
     
-    def get_ids_image(self):
-
-        if self.__ids_image_form == "all":
-            ret = self.coco.getImgIds()
-        elif self.__ids_image_form == "commercial":
-            #ret = self.coco.getImgIds()
-            ret = []
-            for _id in self.coco.getImgIds():
-                id_license = self.coco.imgs[_id]['license']
-                if id_license >= 4:
-                    #ret.append(cc.imgs[i]['id'])
-                    ret.append(_id)
-        return ret
 
     def __next__(self):
         if self.__loop >= len(self.indeces_batchs):
-            self.initialize_loader()
+            #self.initialize_loader()
+            self.initialize_dataset()
             raise StopIteration()
         _ids = self.indeces_batchs[self.__loop]
         img_list, target_list = self.load_bbox(_ids)
@@ -358,7 +374,35 @@ def test_keypoints(cfg, coco, compose):
         for i, (img, anns) in enumerate(data_):
             print(np.array(anns).shape)
             #print(anns)
-        
+
+
+def test_cocoapi(cfg, coco, compose, year):
+    
+    #for dtype in ["train", "val"]:
+    dtype  = "train"
+    fname = cfg.PATH + "annotations/instances_" + dtype + year + ".json"
+    #fname = cfg.PATH + "annotations/person_keypoints_" + dtype + year + ".json"
+    cc = COCO(fname)
+    cats = cc.loadCats(cc.getCatIds())
+    nms=[cat['name'] for cat in cats]
+    print('COCO categories: \n{}\n'.format(' '.join(nms)))
+    print(len(nms))
+
+    #nms = set([cat['supercategory'] for cat in cats])
+    #print('COCO supercategories: \n{}'.format(' '.join(nms)))
+
+    catIds_1 = cc.getCatIds(catNms=['person','dog','skateboard'])
+    imgIds_1 = cc.getImgIds(catIds=catIds_1)
+
+    catIds_2 = cc.getCatIds(catNms=nms[30])
+    imgIds_2 = cc.getImgIds(catIds=catIds_2)
+
+    imgIds_3 = cc.getImgIds()
+
+    print(len(imgIds_1), "imgIds_1")
+    print(len(imgIds_2), "imgIds_2")
+    print(len(imgIds_3), "imgIds_3")
+    print(nms)
 
 
 if __name__ == '__main__':
@@ -369,8 +413,8 @@ if __name__ == '__main__':
     from dataset.augmentator import get_compose
 
     cfg = edict()
-    #if True:
-    if False:
+    if True:
+    #if False:
         year = '2014'
         cfg.PATH = '/data/public_data/COCO2014/'
         coco = coco2014
@@ -407,7 +451,8 @@ if __name__ == '__main__':
     #test_loader(cfg, coco, compose)
     #test_licence(cfg, coco, compose)    
     #test_annotations(cfg, coco, compose, year)
-    test_keypoints(cfg, coco, compose)
+    #test_keypoints(cfg, coco, compose)
+    test_cocoapi(cfg, coco, compose, year)
 
 
     print("end")
