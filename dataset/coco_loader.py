@@ -68,19 +68,20 @@ class coco_base(data_loader.base_augmentation):
                     ret.append(_id)
         
         elif self.__ids_image_form == "custom1":
-            if self.__data == 'train':
-                _pickup = 100
-            elif self.__data == 'val' or self.__data == 'test':
-                _pickup = 10
-            elif self.__data == 'check':
-                _pickup = 1
+            
+            _pickup = 100
             cats = self.coco.loadCats(self.coco.getCatIds())
             nms = [cat['name'] for cat in cats]
+            #print(nms, len(nms))
             ret = []
             for cat in nms:
                 catIds = self.coco.getCatIds(catNms=cat)
                 imgIds = self.coco.getImgIds(catIds=catIds)
-                idx = np.random.choice(len(imgIds), _pickup)
+                #print(cat, len(imgIds))
+                if len(imgIds) != 0:
+                    idx = np.random.choice(len(imgIds), _pickup)
+                else:
+                    continue
                 ret += np.array(imgIds)[idx].tolist()
 
         self.ids_img = ret
