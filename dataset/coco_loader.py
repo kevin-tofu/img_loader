@@ -43,8 +43,6 @@ class coco_base(data_loader.base_augmentation):
         #self.ids_img = self.coco.getImgIds()
         self.get_ids_image()
 
-        
-
     def initialize_dataset(self):
         self.get_ids_image()
         self.initialize_loader()
@@ -107,8 +105,7 @@ class coco_base(data_loader.base_augmentation):
             self.__ids_image_form = v
         else:
             self.__ids_image_form = "commercial"
-            raise ValueError("choose from [all, commercial]")
-    
+            raise ValueError("choose from [all, commercial]")    
 
     def __next__(self):
         if self.__loop >= len(self.indeces_batchs):
