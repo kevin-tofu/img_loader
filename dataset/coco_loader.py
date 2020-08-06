@@ -69,9 +69,9 @@ class coco_base(data_loader.base_augmentation):
         
         elif self.__ids_image_form == "custom1":
             if self.__data == 'train':
-                _pickup = 500
-            elif self.__data == 'val' or self.__data == 'test':
                 _pickup = 100
+            elif self.__data == 'val' or self.__data == 'test':
+                _pickup = 10
             elif self.__data == 'check':
                 _pickup = 1
             cats = self.coco.loadCats(self.coco.getCatIds())
