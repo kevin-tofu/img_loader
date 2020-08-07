@@ -371,12 +371,15 @@ def test_keypoints(cfg, coco, compose):
     
     #cfg.ANNTYPE = 'bbox'
     cfg.ANNTYPE = 'pose'
-    for dtype in ["train", "val"]:
+    #for dtype in ["train", "val"]:
+    for dtype in ["train"]:
         data_ = coco(cfg, dtype, None)
         for i, (img, anns) in enumerate(data_):
-            print(np.array(anns).shape)
+            print(np.array(anns).shape, np.array(img).shape)
             #print(anns)
-
+            continue
+            
+            
 
 def test_cocoapi(cfg, coco, compose, year):
     
@@ -458,8 +461,8 @@ if __name__ == '__main__':
     #test_loader(cfg, coco, compose)
     #test_licence(cfg, coco, compose)    
     #test_annotations(cfg, coco, compose, year)
-    #test_keypoints(cfg, coco, compose)
-    test_cocoapi(cfg, coco, compose, year)
+    test_keypoints(cfg, coco, compose)
+    #test_cocoapi(cfg, coco, compose, year)
 
 
     print("end")
