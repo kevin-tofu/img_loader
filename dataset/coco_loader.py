@@ -113,9 +113,9 @@ class coco_base(data_loader.base_augmentation):
             self.initialize_dataset()
             raise StopIteration()
         _ids = self.indeces_batchs[self.__loop]
-        img_list, target_list = self.load_bbox(_ids)
+        img_list, target_list = self.load(_ids)
         self.__loop += 1
-        return [img_list, target_list]
+        return (img_list, target_list)
 
     def __len__(self):#length of mini-batches
         return self.num_data // self.batchsize
@@ -142,13 +142,14 @@ class coco_base(data_loader.base_augmentation):
     def get_keypoints(self, ann):
 
         if ann['num_keypoints'] == 0:
-            print("NO keypoints")
+            #print("NO keypoints")
+            #print(ann)
             return None
         joints = np.array(ann['keypoints']).reshape((-1, 3))
-        print(ann['keypoints'], ann['num_keypoints'], joints.shape)
+        #print(ann['keypoints'], ann['num_keypoints'], joints.shape)
         return joints
 
-    def load_bbox(self, _ids):
+    def load(self, _ids):
         #https://pytorch.org/docs/stable/_modules/torchvision/datasets/coco.html#CocoDetection
         img_list = []
         target_list = []
@@ -180,9 +181,9 @@ class coco_base(data_loader.base_augmentation):
                     continue
                 else:
                     target.append(ret)
+
             if len(target) == 0:
                 continue
-
             target_list.append(target)
             img_list.append(img)
         
@@ -296,7 +297,7 @@ def test_loader(cfg, coco, compose=None):
         print(np.array(img).shape, np.array(target).shape)
         #print(target)
         d = batch_idx/len(data_) * 100
-        print('[{} / {}({:.1f}%)]'.__format(batch_idx, len(data_), d))
+        print('[{} / {}({:.1f}%)]'.format(batch_idx, len(data_), d))
 
 
 def test_licence(cfg, coco, compose):
@@ -369,18 +370,48 @@ def test_annotations(cfg, coco, compose, year):
 
 
 def test_keypoints(cfg, coco, compose):
-    
+
+    from utils import operator
+    import matplotlib as mpl
+    mpl.use('Agg')
+    import pylab as pl
+    from skimage.draw import circle
+    def make_keypoint(img, ann):
+        
+        ret = np.copy(img)
+        print(ret.shape, ann.shape)
+        for a in ann:
+            #print(x, y)
+            x = int(a[0])
+            y = int(a[1])
+            rr, cc = circle(y, x, 5, ret.shape)
+            ret[rr, cc, :] = (255, 0, 0)
+        return ret
+
+    path = "./dataset/temp/"
+    operator.remove_files(path)
+    operator.make_directory(path)
+
     #cfg.ANNTYPE = 'bbox'
     cfg.ANNTYPE = 'pose'
     #for dtype in ["train", "val"]:
     for dtype in ["train"]:
-        data_ = coco(cfg, dtype, None)
-        for i, (img, anns) in enumerate(data_):
-            print(np.array(anns).shape, np.array(img).shape)
+        _data = coco(cfg, dtype, compose)
+        #_data = coco(cfg, dtype, None)
+        for i, (img, anns) in enumerate(_data):
+            #print(np.array(anns).shape, np.array(img).shape)
             #print(anns)
-            continue
+            #print(np.array(img))
+            for ii, (img_each, ann_each) in enumerate(zip(img, anns)):
+                fname = path + str(i*32 + ii) + ".jpg"
+                i_ret = make_keypoint(img_each, ann_each)
+                pl.clf()
+                pl.imshow(i_ret)
+                pl.savefig(fname)
+                
+            break
             
-            
+
 
 def test_cocoapi(cfg, coco, compose, year):
     
@@ -421,7 +452,7 @@ if __name__ == '__main__':
     print("start")
     np.random.seed(1234)
     from easydict import EasyDict as edict
-    from dataset.augmentator import get_compose
+    from dataset.augmentator import get_compose, get_compose_keypoints
 
     cfg = edict()
     if True:
@@ -456,13 +487,15 @@ if __name__ == '__main__':
 
     compose = get_compose(crop_min_max, image_size, image_size, 
                           hue_shift, saturation_shift, value_shift, fmt)
+    compose_keypoints = get_compose_keypoints(crop_min_max, image_size, image_size, 
+                                    hue_shift, saturation_shift, value_shift, fmt)
     #compose = None
 
     #test_bbox(cfg, coco, compose)
-    #test_loader(cfg, coco, compose)
-    #test_licence(cfg, coco, compose)    
+    #test_bboxloader(cfg, coco, compose)
+    test_keypoints(cfg, coco, compose_keypoints)
+    #test_licence(cfg, coco, compose)
     #test_annotations(cfg, coco, compose, year)
-    test_keypoints(cfg, coco, compose)
     #test_cocoapi(cfg, coco, compose, year)
 
 

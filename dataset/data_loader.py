@@ -15,11 +15,10 @@ def chunks2(l, n):
 
 class base(object):
 
-    def __init__(self, cfg, transformer=None):
+    def __init__(self, cfg):
 
         self.num_data = -1
         self.batchsize = cfg.BATCHSIZE
-        self.transformer = transformer
         self.indeces = None
         self._loop = 0
         self.normalized = True
@@ -47,7 +46,8 @@ class base(object):
 class base_augmentation(base):
 
     def __init__(self, cfg, transformer=None):
-        super(base_augmentation, self).__init__(cfg, transformer)
+        super(base_augmentation, self).__init__(cfg)
+        self.transformer = transformer
         self.prefix = cfg.ANNTYPE#
         self.form = "icxywh_normalized"
 
@@ -57,19 +57,25 @@ class base_augmentation(base):
 
     @prefix.setter
     def prefix(self, v):
+        """
+        setter for functions to transform data and annotations, its format.
+        """
         self.__prefix = 'instances'
         if v == "bbox":
             self.__prefix = 'instances'
             self.raw_transform = self.raw_bbox
-            self.augumentation_albumentations = self.augumentation_bbox
+            self.augmentation_albumentations = self.augmentation_bbox
             self.format = self.format_bbox
         elif v == "pose":
             self.__prefix = 'person_keypoints'
             self.raw_transform = self.raw_keypoints
-            self.augumentation_albumentations = self.augumentation_keypoints
+            self.augmentation_albumentations = self.augmentation_keypoints
             self.format = self.format_keypoints
         elif v == "captions":
             self.__prefix = 'captions'
+            self.raw_transform = None
+            self.augmentation_albumentations = None
+            self.format = None
 
     @property
     def form(self):
@@ -92,7 +98,7 @@ class base_augmentation(base):
     def raw_bbox(self, img, label):
         return (img, np.array(label[:, 0:4]), np.array(label[:, 4:]))
 
-    def augumentation_bbox(self, img, label):
+    def augmentation_bbox(self, img, label):
         
         #print(label, img.shape, "raw")
         # !!! caution : TODO
@@ -111,23 +117,61 @@ class base_augmentation(base):
             return None
         return (img_trans, x1y1wh_trans, id_trans)
 
-    def raw_keypoints(self, img, keypoints):
-        return (img, keypoints[:, 0:2], keypoints[:, 2:])
 
-    def augumentation_keypoints(self, img, keypoints):
-        
+
+    def raw_keypoints(self, img, keypoints):
+        #print(img.shape)
+        if keypoints is list:
+            keypoints = np.array(keypoints)
+        keypoints_all = keypoints.reshape((keypoints.shape[0] * keypoints.shape[1], 3))
+
+        _class = []
+        _person = []
+        for loop in range(keypoints.shape[0]):
+            _class.append(range(keypoints.shape[1]))
+            _person.append(np.ones(keypoints.shape[1]).tolist())
+        _class = np.array(_class).reshape((keypoints.shape[0] * keypoints.shape[1], 1))
+        _person = np.array(_person).reshape((keypoints.shape[0] * keypoints.shape[1], 1))
+        cp = np.concatenate((_class, _person), 1)
+
+        return (img, keypoints_all[:, 0:2], cp)
+
+
+    def augmentation_keypoints(self, img, keypoints):
+
+        #keypoints (1, 17, 3)
+        keypoints = np.array(keypoints)
+        _, _, cp = self.raw_keypoints(img, keypoints)
+        _class, _person = cp[:, 0], cp[:, 1]
+
         # !!! caution : TODO
-        keypoints[:, 0:2] = np.clip(keypoints[:, 0:2], 0.1, 416 - 0.1) 
-        annotation = {'image': img, 'keypoints':keypoints[:, 0:2]}
+        keypoints_all = keypoints.reshape((keypoints.shape[0] * keypoints.shape[1], 3))
+        keypoints_all[:, 0:2] = np.clip(keypoints_all[:, 0:2], 0.1, 416 - 0.1)
+        conf = np.argwhere((keypoints_all[:, 2] == 2))[:, 0]
+        #person_select = [str(l) for l in person[conf]]
+
+        class_select = _class[conf]
+        person_select = _person[conf]
+
+        annotation = {'image': img, \
+                      'keypoints':keypoints_all[:, 0:2][conf], \
+                      'class': class_select, \
+                      'person': person_select}
 
         augmented = self.transformer(**annotation)
         img_trans = augmented['image']
-        keypoints_trans = np.array(augmented['keypoints'])
+        key_trans = np.array(augmented['keypoints'])
+        class_trans = np.array(augmented['class'])[:, np.newaxis]
+        person_trans = np.array(augmented['person'])[:, np.newaxis]
+        
         # !!! caution : TODO
         #keypoints_trans = np.clip(keypoints_trans, 0, 415.9) 
-        if len(keypoints_trans) == 0:
-            return None
-        return (img_trans, keypoints_trans, keypoints[:, 2:])
+        if len(key_trans) == 0:
+                return None
+                
+        return (img_trans, key_trans, np.concatenate((class_trans, person_trans), 1))
+
+
 
     def format_bbox(self, b, data_trans, ret_targets):
 
@@ -155,8 +199,8 @@ class base_augmentation(base):
     def format_keypoints(self, b, data_trans, ret_targets):
 
         keypoints, valid = data_trans[1], data_trans[2]
-
-        ret_targets.append(np.concatenate((keypoints, valid), 1))
+        ret = np.concatenate((keypoints, valid), 1)
+        ret_targets.append(ret)
 
 
     def transform(self, images, targets):
@@ -172,20 +216,25 @@ class base_augmentation(base):
             if len(t) == 0:
                 continue
 
-            if self.transformer is not None:
-                # augumentation by albumentations
-                outputs = self.augumentation_albumentations(img, label)
-            else:
-                # without augumentation
+            if self.transformer is None:
+                # without augmentation
                 outputs = self.raw_transform(img, label)
+            else:
+                # augmentation by albumentations
+                outputs = self.augmentation_albumentations(img, label)
 
             if outputs is None:
                 continue
-
-            ret_images.append(outputs[0])
+            
+            #print(outputs[0].shape)
+            #ret_images.append(outputs[0])
+            ret_images.append(outputs[0].tolist())
             self.format(b, outputs, ret_targets)
             
             b += 1
 
+        # the size of images are ALL different. so you cannot make it np.array.
+        # without resizing.
         return ret_images, ret_targets
+        
 
