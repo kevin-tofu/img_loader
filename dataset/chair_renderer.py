@@ -15,11 +15,9 @@ from numpy import random
 if __name__ == '__main__':
     import spacial_sampling, data_loader
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from utils import utils  
 else:
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
     from dataset import spacial_sampling, data_loader
-    from utils import utils  
 
 def _create_raymond_lights(c, intensity):
     

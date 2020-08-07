@@ -2,9 +2,9 @@
 #import sys
 #sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 #from dataset import chair_renderer, chair_renderer2, coco_loader
-from dataset import chair_renderer, coco_loader
-from utils.utils import *
-from utils.parse_config import *
+from img_loader.dataset import chair_renderer, coco_loader
+#from utils.utils import *
+#from utils.parse_config import *
 
 def get_train_val(cfg):
 
@@ -34,6 +34,8 @@ def get_train_val(cfg):
 
 def get_train(cfg):
 
+    cfg.DATASET.IDS = cfg.DATASET.IDS_train
+
     if cfg.DATASET.NAME == 'chair_trans':
         print('chair_trans')
         train = chair_renderer.chair_randomRT(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
@@ -54,6 +56,8 @@ def get_train(cfg):
 
 
 def get_val(cfg):
+
+    cfg.DATASET.IDS = cfg.DATASET.IDS_val
 
     if cfg.DATASET.NAME == 'chair_trans':
         print('chair_trans')
