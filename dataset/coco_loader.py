@@ -391,8 +391,6 @@ def test_keypoints(cfg, coco, compose):
     path = "./dataset/temp/"
     operator.remove_files(path)
     operator.make_directory(path)
-
-    #cfg.ANNTYPE = 'bbox'
     cfg.ANNTYPE = 'pose'
     #for dtype in ["train", "val"]:
     for dtype in ["train"]:
@@ -400,8 +398,6 @@ def test_keypoints(cfg, coco, compose):
         #_data = coco(cfg, dtype, None)
         for i, (img, anns) in enumerate(_data):
             #print(np.array(anns).shape, np.array(img).shape)
-            #print(anns)
-            #print(np.array(img))
             for ii, (img_each, ann_each) in enumerate(zip(img, anns)):
                 fname = path + str(i*32 + ii) + ".jpg"
                 i_ret = make_keypoint(img_each, ann_each)
@@ -450,13 +446,14 @@ def test_cocoapi(cfg, coco, compose, year):
 if __name__ == '__main__':
 
     print("start")
-    np.random.seed(1234)
+    #np.random.seed(1234)
+    np.random.seed(9999)
     from easydict import EasyDict as edict
     from dataset.augmentator import get_compose, get_compose_keypoints
 
     cfg = edict()
-    if True:
-    #if False:
+    #if True:
+    if False:
         year = '2014'
         cfg.PATH = '/data/public_data/COCO2014/'
         coco = coco2014
@@ -493,7 +490,8 @@ if __name__ == '__main__':
 
     #test_bbox(cfg, coco, compose)
     #test_bboxloader(cfg, coco, compose)
-    test_keypoints(cfg, coco, compose_keypoints)
+    #test_keypoints(cfg, coco, compose_keypoints)
+    test_keypoints(cfg, coco, None)
     #test_licence(cfg, coco, compose)
     #test_annotations(cfg, coco, compose, year)
     #test_cocoapi(cfg, coco, compose, year)

@@ -24,14 +24,13 @@ def get_compose0(crop_min_max, image_height, image_width, hue_shift, saturation_
                     keypoint_params=A.KeypointParams(format='xy'))
 
 
-def get_compose_keypoints(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
+def get_compose_keypoints0(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
     return Compose([Resize(image_height, image_width, p=1.0),\
                     HorizontalFlip(p=0.5),\
                     RandomSizedCrop(crop_min_max, image_height, image_width, p=1.0),\
                     HueSaturationValue(hue_shift, saturation_shift, value_shift, p=1.0)],\
                     keypoint_params=A.KeypointParams(format='xy', label_fields=['class', 'person']))
-                    #, label_fields=[str(l) for l in range(17)]
-                    
+
 def get_compose(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
 
     return Compose([Resize(image_height, image_width, p=1.0),\
@@ -43,4 +42,17 @@ def get_compose(crop_min_max, image_height, image_width, hue_shift, saturation_s
                     Blur(p=0.3), \
                     RGBShift(p=0.2)], \
                     bbox_params={'format':format, 'label_fields':['category_id']})
+
+
+def get_compose_keypoints(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
+
+    return Compose([Resize(image_height, image_width, p=1.0),\
+                    HorizontalFlip(p=0.5),\
+                    RandomSizedCrop(crop_min_max, image_height, image_width, p=0.2),\
+                    HueSaturationValue(hue_shift, saturation_shift, value_shift, p=0.2),\
+                    RandomGamma(p=0.5), \
+                    GaussNoise(p=0.2), \
+                    Blur(p=0.3), \
+                    RGBShift(p=0.9)], \
+                    keypoint_params=A.KeypointParams(format='xy', label_fields=['class', 'person']))
 
