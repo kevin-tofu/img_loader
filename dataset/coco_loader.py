@@ -82,6 +82,15 @@ class coco_base(data_loader.base_augmentation):
                     continue
                 ret += np.array(imgIds)[idx].tolist()
 
+        elif self.__ids_image_form == "vehicle": 
+            nms = ["track", "car", "bus"]
+            ret = []
+            for cat in nms:
+                catIds = self.coco.getCatIds(catNms=cat)
+                imgIds = self.coco.getImgIds(catIds=catIds)
+                print(len(imgIds))
+                ret += np.array(imgIds).tolist()
+
         self.ids_img = ret
         self.num_data = len(self.ids_img)
 
@@ -97,15 +106,11 @@ class coco_base(data_loader.base_augmentation):
 
     @ids_image_form.setter
     def ids_image_form(self, v):
-        if v == "all":
-            self.__ids_image_form = v
-        elif v == "commercial":
-            self.__ids_image_form = v
-        elif v == "custom1":
+        if v == "all" or v == "commercial" or v == "custom1" or v == "vehicle":
             self.__ids_image_form = v
         else:
             self.__ids_image_form = "commercial"
-            raise ValueError("choose from [all, commercial]")    
+            raise ValueError("choose from [all, custom1, vehicle, commercial]")    
 
     def __next__(self):
         if self.__loop >= len(self.indeces_batchs):

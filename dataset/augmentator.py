@@ -2,6 +2,7 @@ import albumentations as A
 from albumentations import Compose
 from albumentations.augmentations.transforms import Resize, HorizontalFlip, RandomSizedCrop, HueSaturationValue
 from albumentations.augmentations.transforms import RandomGamma, Blur, RGBShift, GaussNoise, ChannelShuffle
+from albumentations.augmentations.transforms import Normalize
 
 # Resize image to (image_height, image_width) with 100% probability
 # Flip LR with 50% probability
@@ -40,7 +41,8 @@ def get_compose(crop_min_max, image_height, image_width, hue_shift, saturation_s
                     RandomGamma(p=0.5), \
                     GaussNoise(p=0.2), \
                     Blur(p=0.3), \
-                    RGBShift(p=0.2)], \
+                    RGBShift(p=0.2), \
+                    Normalize(always_apply=True)], \
                     bbox_params={'format':format, 'label_fields':['category_id']})
 
 
@@ -53,6 +55,7 @@ def get_compose_keypoints(crop_min_max, image_height, image_width, hue_shift, sa
                     RandomGamma(p=0.5), \
                     GaussNoise(p=0.2), \
                     Blur(p=0.3), \
-                    RGBShift(p=0.9)], \
+                    RGBShift(p=0.9), \
+                    Normalize(always_apply=True)], \
                     keypoint_params=A.KeypointParams(format='xy', label_fields=['class', 'person']))
 
