@@ -95,13 +95,16 @@ class coco_base(data_loader.base_augmentation):
 
         if self.__ids_image_form == "all":
             ret_img = self.coco.getImgIds()
-
-        elif self.__ids_image_form == "commercial":
-            #ret = self.coco.getImgIds()
-            
             cats = self.coco.loadCats(self.coco.getCatIds())
             nms = [cat['name'] for cat in cats]
-
+            for _loop, cat in enumerate(nms):
+                __map_catID[int(catIds[0])] = _loop
+        elif self.__ids_image_form == "commercial":
+            #ret = self.coco.getImgIds()
+            cats = self.coco.loadCats(self.coco.getCatIds())
+            nms = [cat['name'] for cat in cats]
+            for _loop, cat in enumerate(nms):
+                __map_catID[int(catIds[0])] = _loop
             for _id in self.coco.getImgIds():
                 id_license = self.coco.imgs[_id]['license']
                 if id_license >= 4:
