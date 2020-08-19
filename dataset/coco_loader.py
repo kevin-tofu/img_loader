@@ -37,11 +37,9 @@ class coco_base(data_loader.base_augmentation):
         self.dataName = self.get_dataName(data, name) # train2014
         self.img_dir = self.data_dir + '/images/' + self.dataName + '/'
         self.annfname = '%s/annotations/%s_%s.json'%(self.data_dir, self.prefix, self.dataName)
-
         print(self.annfname)
         self.coco = COCO(self.annfname)
-        #self.ids_img = self.coco.getImgIds()
-        self.get_ids_image()
+        #self.get_ids_image()
 
     def initialize_dataset(self):
         self.get_ids_image()
@@ -88,7 +86,6 @@ class coco_base(data_loader.base_augmentation):
             for cat in nms:
                 catIds = self.coco.getCatIds(catNms=cat)
                 imgIds = self.coco.getImgIds(catIds=catIds)
-                print(len(imgIds))
                 ret += np.array(imgIds).tolist()
 
         self.ids_img = ret
