@@ -98,12 +98,15 @@ class coco_base(data_loader.base_augmentation):
             cats = self.coco.loadCats(self.coco.getCatIds())
             nms = [cat['name'] for cat in cats]
             for _loop, cat in enumerate(nms):
+                catIds = self.coco.getCatIds(catNms=cat)
                 __map_catID[int(catIds[0])] = _loop
+
         elif self.__ids_image_form == "commercial":
             #ret = self.coco.getImgIds()
             cats = self.coco.loadCats(self.coco.getCatIds())
             nms = [cat['name'] for cat in cats]
             for _loop, cat in enumerate(nms):
+                catIds = self.coco.getCatIds(catNms=cat)
                 __map_catID[int(catIds[0])] = _loop
             for _id in self.coco.getImgIds():
                 id_license = self.coco.imgs[_id]['license']
@@ -217,7 +220,7 @@ class coco_base(data_loader.base_augmentation):
                 img_list.append(img)
         
         img_list, target_list = self.transform(img_list, target_list)
-
+        #print(target_list)
         return img_list, target_list
 
 
