@@ -39,7 +39,11 @@ class coco_base(data_loader.base_augmentation):
         self.annfname = '%s/annotations/%s_%s.json'%(self.data_dir, self.prefix, self.dataName)
         print(self.annfname)
         self.coco = COCO(self.annfname)
-        #self.get_ids_image()
+
+        #
+        self.ids_cat = []
+        self.ids_img = []
+        self.map_catID = {}
 
     def initialize_dataset(self):
         self.get_ids_image()
@@ -52,16 +56,16 @@ class coco_base(data_loader.base_augmentation):
     def get_ids_image(self):
 
         if self.__ids_image_form == "all":
-            ret = self.coco.getImgIds()
+            ret_img = self.coco.getImgIds()
 
         elif self.__ids_image_form == "commercial":
             #ret = self.coco.getImgIds()
-            ret = []
+            ret_img = []
             for _id in self.coco.getImgIds():
                 id_license = self.coco.imgs[_id]['license']
                 if id_license >= 4:
                     #ret.append(cc.imgs[i]['id'])
-                    ret.append(_id)
+                    ret_img.append(_id)
         
         elif self.__ids_image_form == "custom1":
             
@@ -69,27 +73,41 @@ class coco_base(data_loader.base_augmentation):
             cats = self.coco.loadCats(self.coco.getCatIds())
             nms = [cat['name'] for cat in cats]
             #print(nms, len(nms))
-            ret = []
-            for cat in nms:
+            ret_img = []
+            ret_cat = []
+            __map_catID = {}
+            #for cat in nms:
+            for _loop, cat in enumerate(nms):
                 catIds = self.coco.getCatIds(catNms=cat)
                 imgIds = self.coco.getImgIds(catIds=catIds)
+                __map_catID[catIds[0]] = _loop
                 #print(cat, len(imgIds))
                 if len(imgIds) != 0:
                     idx = np.random.choice(len(imgIds), _pickup)
                 else:
                     continue
-                ret += np.array(imgIds)[idx].tolist()
+                ret_cat += catIds
+                ret_img += np.array(imgIds)[idx].tolist()
 
         elif self.__ids_image_form == "vehicle": 
-            nms = ["track", "car", "bus"]
-            ret = []
-            for cat in nms:
+            cats = self.coco.loadCats(self.coco.getCatIds())
+            print(cats)
+            nms = ["truck", "car", "bus"]
+            ret_img = []
+            ret_cat = []
+            __map_catID = {}
+            for _loop, cat in enumerate(nms):
                 catIds = self.coco.getCatIds(catNms=cat)
                 imgIds = self.coco.getImgIds(catIds=catIds)
-                ret += np.array(imgIds).tolist()
-
-        self.ids_img = ret
+                __map_catID[catIds[0]] = _loop
+                ret_cat += catIds
+                ret_img += imgIds
+                
+        self.ids_cat = ret_cat
+        self.ids_img = ret_img
+        self.map_catID = __map_catID
         self.num_data = len(self.ids_img)
+        #print(__map_catID)
 
     def get_dataName(self, data, name):
         if data == 'check':
@@ -126,12 +144,20 @@ class coco_base(data_loader.base_augmentation):
         nms = [str(i+1) for i in range(self.n_class)]
         return nms
 
+    def check_CatID(self, _id):
+        arg = np.argwhere( (np.array(self.ids_cat) == _id ))[:, 0].tolist()
+        #print(arg, self.ids_cat, _id)
+        if len(arg) > 0:
+            return True
+        else:
+            return False
+
     def get_bbox(self, ann):
 
         if len(ann['bbox']) == 0:
             print("NO BOX")
             return None
-        if ann['category_id'] >= self.n_class:
+        if self.check_CatID(ann['category_id']) == False:
             #print('category_id : ', ann['category_id'])
             return None
 
@@ -139,7 +165,10 @@ class coco_base(data_loader.base_augmentation):
         y1 = float(ann['bbox'][1])
         w = float(ann['bbox'][2])
         h = float(ann['bbox'][3])
-        return [x1, y1, w, h, ann['category_id']]
+        id_cat = self.map_catID[int(ann['category_id'])]
+        #id_cat = int(ann['category_id'])
+
+        return [x1, y1, w, h, id_cat]
 
     def get_keypoints(self, ann):
 
@@ -151,11 +180,11 @@ class coco_base(data_loader.base_augmentation):
         #print(ann['keypoints'], ann['num_keypoints'], joints.shape)
         return joints
 
-    def load(self, _ids):
+    def load(self, _ids_img):
         #https://pytorch.org/docs/stable/_modules/torchvision/datasets/coco.html#CocoDetection
         img_list = []
         target_list = []
-        for i, _v in enumerate(_ids):
+        for i, _v in enumerate(_ids_img):
             #img
             img_id = self.ids_img[_v]
             img_name = self.coco.imgs[img_id]['file_name']
@@ -178,12 +207,15 @@ class coco_base(data_loader.base_augmentation):
             if len(anns) == 0:
                 continue
             for ann in anns:
+                #print(ann)
                 ret = self.get_annotation(ann)
+                #print(ret)
                 if ret is None:
                     continue
                 else:
                     target.append(ret)
 
+            #print(target, "target")
             if len(target) == 0:
                 continue
             target_list.append(target)
