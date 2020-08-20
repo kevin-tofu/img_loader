@@ -29,7 +29,7 @@ h, w = 416, 416
 tf = Compose([Resize(h, w, p=1.0)],\
               bbox_params={'format':format, 'label_fields':['category_id']})
 
-dataloader = coco_base(cfg, "train", tf, "2017")
+dataloader = coco_specific(cfg, "train", tf, "2017")
 imgs, annotations, dataloader.__next__()
 
 ```
@@ -48,7 +48,7 @@ w : normalized width of bbox
 h : normalized height of bbox  
 ```
 cfg.ANNTYPE = 'bbox'
-dataloader = coco_base(cfg, "train", tf, "2017")
+dataloader = coco_specific(cfg, "train", tf, "2017")
 dataloader.form = "icxywh_normalized"
 #dataloader.form = "x1y1whc"
 imgs, annotations, dataloader.__next__()
@@ -71,7 +71,7 @@ dataloader.form = "x1y1whc"
 you will get keypoints annotations if you set cfg.ANNTYPE = 'keypoints'.
 ```
 cfg.ANNTYPE = 'keypoints'
-dataloader = coco_base(cfg, "train", tf, "2017")
+dataloader = coco_specific(cfg, "train", tf, "2017")
 dataloader.form = "icxywh_normalized"
 imgs, annotations, dataloader.__next__()
 ```
