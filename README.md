@@ -1,7 +1,9 @@
-# Usage
-## coco_loader.py
+# Image loader Interface
+ 
+## Usage
+### coco_loader.py
 
-load a batch that includes images with annotations.  
+This class loads mini-batches that includes images with annotations from COCO format dataset.  
 Data augmentation will be done by library albumentation.  
 images and annotations will be transformed based on it.  
 this class outputs raw data image and annotations if you won't give transformer.  
@@ -10,7 +12,7 @@ this class outputs raw data image and annotations if you won't give transformer.
 * pycocotools
 * numpy
 * scikit-image
-
+* albumentation
 
 #### Ex. How to load images with annotation on each mini-batch.
 ```
@@ -34,10 +36,10 @@ imgs, annotations, dataloader.__next__()
 
 
 
-## How to Test code
+### How to Test coco_loader.py code
 
 #### coco_loader.py
-
+Default dataset path is /data/public_data/COCO2017/
 
 * check loading  
 python img_loader/dataset/coco_loader.py loader path2COCO
