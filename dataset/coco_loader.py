@@ -91,7 +91,6 @@ class coco_base(data_loader.base_augmentation):
         self.__loop = 0
         self.indeces_batchs = self.get_indeces_batches()
 
-
     @property
     def ids_image_form(self):
         return self.__ids_image_form
@@ -123,11 +122,11 @@ class coco_base(data_loader.base_augmentation):
 
     def get_ids_image(self):
 
-        ret_img = []
+        __ret_img = []
         __map_catID = {}
 
         if self.ids_image_form == "all":
-            ret_img = self.coco.getImgIds()
+            __ret_img = self.coco.getImgIds()
             cats = self.coco.loadCats(self.coco.getCatIds())
             nms = [cat['name'] for cat in cats]
             for _loop, cat in enumerate(nms):
@@ -145,7 +144,7 @@ class coco_base(data_loader.base_augmentation):
                 id_license = self.coco.imgs[_id]['license']
                 if id_license >= 4:
                     #ret.append(cc.imgs[i]['id'])
-                    ret_img.append(_id)
+                    __ret_img.append(_id)
         
         elif self.ids_image_form == "custom1":
             
@@ -163,7 +162,7 @@ class coco_base(data_loader.base_augmentation):
                     idx = np.random.choice(len(imgIds), _pickup)
                 else:
                     continue
-                ret_img += np.array(imgIds)[idx].tolist()
+                __ret_img += np.array(imgIds)[idx].tolist()
 
         elif self.ids_image_form == "vehicle": 
             cats = self.coco.loadCats(self.coco.getCatIds())
@@ -172,9 +171,9 @@ class coco_base(data_loader.base_augmentation):
                 catIds = self.coco.getCatIds(catNms=cat)
                 imgIds = self.coco.getImgIds(catIds=catIds)
                 __map_catID[int(catIds[0])] = _loop
-                ret_img += imgIds
+                __ret_img += imgIds
                 
-        self.ids_img = ret_img
+        self.ids_img = __ret_img
         self.map_catID = __map_catID
         #self.num_data = len(self.ids_img)
 
