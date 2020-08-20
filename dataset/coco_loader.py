@@ -1,10 +1,10 @@
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import numpy as np
 from pycocotools.coco import COCO
 from skimage import io
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from dataset import data_loader
 
 
@@ -15,9 +15,8 @@ class coco_base(data_loader.base_augmentation):
         cfg : configuration given by EasyDict.
              PATH, IDS, ANNTYPE, BATCHSIZE, NUM_CLASSES should be given. 
              
-        data : 
+        data : "train", "val", "test", "check"
 
-            
         transformer : Compose object from albumentations should be given.
                      image and its annotation will be augmentated by Compose.
 
