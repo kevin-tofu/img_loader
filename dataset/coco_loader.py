@@ -40,27 +40,46 @@ class coco_base(data_loader.base_augmentation):
 
     def __init__(self, cfg, data='train', transformer = None, name="2017"):
         super(coco_base, self).__init__(cfg, transformer)
+        
         self.__data = data
         self.data_dir = cfg.PATH
         self.n_class = cfg.NUM_CLASSES
         self.coco = None
         self.ids_image_form = cfg.IDS#'all', ''
-        if self.prefix == 'instances':
+        if self.anntype == 'bbox':
             self.get_annotation = self.get_bbox
-        elif self.prefix == 'person_keypoints':
+        elif self.anntype == 'keypoints':
             self.get_annotation = self.get_keypoints
 
         self.pycocoloader(cfg, data, transformer, name)
         self.initialize_dataset()
         
-    def pycocoloader(self, cfg, data, transformer, name):
+    def get_prefix(self, v):
+        __prefix = 'instances'
+        if v == "bbox":
+            __prefix = 'instances'
+        elif v == "keypoints":
+            __prefix = 'person_keypoints'
+        elif v == "captions":
+            __prefix = 'captions'
+        else:
+            raise ValueError("choose from [bbox, keypoints, captions]")
+        return __prefix
 
-        self.dataName = self.get_dataName(data, name) # train2014
-        self.img_dir = self.data_dir + '/images/' + self.dataName + '/'
-        self.annfname = '%sannotations/%s_%s.json'%(self.data_dir, self.prefix, self.dataName)
-        print(self.annfname)
-        self.coco = COCO(self.annfname)
-        #
+    def get_dataName(self, data, name):
+        if data == 'check':
+            return 'val' + name
+        else:
+            return data + name
+
+    def pycocoloader(self, cfg, data, transformer, name):
+        
+        prefix = self.get_prefix(cfg.ANNTYPE)
+        dataName = self.get_dataName(data, name) # train2014
+        self.img_dir = self.data_dir + '/images/' + dataName + '/'
+        annfname = '%sannotations/%s_%s.json'%(self.data_dir, prefix, dataName)
+        print(annfname)
+        self.coco = COCO(annfname)
         self.ids_img = []
         self.map_catID = {}
 
@@ -72,11 +91,6 @@ class coco_base(data_loader.base_augmentation):
         self.__loop = 0
         self.indeces_batchs = self.get_indeces_batches()
 
-    def get_dataName(self, data, name):
-        if data == 'check':
-            return 'val' + name
-        else:
-            return data + name
 
     @property
     def ids_image_form(self):
