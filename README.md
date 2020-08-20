@@ -37,7 +37,7 @@ imgs, annotations, dataloader.__next__()
 ### How to convert data format.
 
 #### BBox format  
-if you change the valibalbe .format, you can change data format.
+if you set form on configuration dictionary, you can change data format.
 if you choose "icxywh_normalized", the annotations takes shape (i, c, x, y, w, h).  
 where each numbers of elements is  
 i : batch number  
@@ -48,9 +48,8 @@ w : normalized width of bbox
 h : normalized height of bbox  
 ```
 cfg.ANNTYPE = 'bbox'
+cfg.FORM = "icxywh_normalized"
 dataloader = coco_specific(cfg, "train", tf, "2017")
-dataloader.form = "icxywh_normalized"
-#dataloader.form = "x1y1whc"
 imgs, annotations, dataloader.__next__()
 ```
 
@@ -63,7 +62,10 @@ w : width of bbox
 h : height of bbox  
 c : category number  
 ```
-dataloader.form = "x1y1whc"
+cfg.FORM = "x1y1whc"
+
+# or change form variable.
+#dataloader.form = "x1y1whc"
 ```
 
 
