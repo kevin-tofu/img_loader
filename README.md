@@ -55,7 +55,7 @@ imgs, annotations, dataloader.__next__()
 
 if you choose "x1y1whc", the annotations will be returned as a list,  
 and its each elements are correspoinding to the each batch of images, and it takes the list of "(x1, y1, w, h, c)".  
-where each numbers of elements is 
+where each numbers of elements is  
 x1 : left-upper x-coordinate of bbox  
 y1 : left-upper y-coordinate of bbox  
 w : width of bbox  
