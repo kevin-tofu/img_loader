@@ -38,20 +38,32 @@ imgs, annotations, dataloader.__next__()
 
 #### BBox format  
 if you change the valibalbe .format, you can change data format.
-```
-dataloader = coco_base(cfg, "train", tf, "2017")
-dataloader.form = "icxywh_normalized"
-#dataloader.form = "x1y1whc"
-imgs, annotations, dataloader.__next__()
-```
 if you choose "icxywh_normalized", the annotations takes shape (i, c, x, y, w, h).  
+where each numbers of elements is
 i : batch number  
 c : category number  
 x : left-upper x-normalized-coordinate of bbox  
 y : left-upper y-normalized-coordinate of bbox  
 w : normalized width of bbox  
 h : normalized height of bbox  
+```
+dataloader = coco_base(cfg, "train", tf, "2017")
+dataloader.form = "icxywh_normalized"
+#dataloader.form = "x1y1whc"
+imgs, annotations, dataloader.__next__()
+```
 
+if you choose "x1y1whc", the annotations will be returned as a list,  
+and its each elements are correspoinding to the each batch of images, and it takes the list of "(x1, y1, w, h, c)".  
+where each numbers of elements is 
+x1 : left-upper x-coordinate of bbox  
+y1 : left-upper y-coordinate of bbox  
+w : width of bbox  
+h : height of bbox  
+c : category number  
+```
+dataloader.form = "x1y1whc"
+```
 
 ### How to Test coco_loader.py code
 
