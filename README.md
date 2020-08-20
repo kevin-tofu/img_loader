@@ -73,8 +73,9 @@ cfg.FORM = "x1y1whc"
 you will get keypoints annotations if you set cfg.ANNTYPE = 'keypoints'.
 ```
 cfg.ANNTYPE = 'keypoints'
+cfg.FORM = "xyc"
+
 dataloader = coco_specific(cfg, "train", tf, "2017")
-dataloader.form = "icxywh_normalized"
 imgs, annotations, dataloader.__next__()
 ```
 
