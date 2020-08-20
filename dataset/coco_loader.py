@@ -143,7 +143,11 @@ class coco_base(data_loader.base_augmentation):
                 
         self.ids_img = ret_img
         self.map_catID = __map_catID
-        self.num_data = len(self.ids_img)
+        #self.num_data = len(self.ids_img)
+
+    @property
+    def num_data(self):
+        return len(self.ids_img)
 
     def get_bbox(self, ann):
 

@@ -17,12 +17,11 @@ class base(object):
 
     def __init__(self, cfg):
 
-        self.num_data = -1
         self.batchsize = cfg.BATCHSIZE
         self.indeces = None
-        self._loop = 0
-        self.normalized = True
-        self.indeces = None
+    @property
+    def num_data(self):
+        NotImplementedError()
 
     def __len__(self):
         NotImplementedError()
