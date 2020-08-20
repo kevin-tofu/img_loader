@@ -67,36 +67,40 @@ class base_augmentation(base):
     def __init__(self, cfg, transformer=None):
         super(base_augmentation, self).__init__(cfg)
         self.transformer = transformer
-        self.prefix = cfg.ANNTYPE#
+        self.anntype = cfg.ANNTYPE#
         self.form = "icxywh_normalized"
 
     @property
-    def prefix(self):
-        return self.__prefix
+    def anntype(self):
+        return self.__anntype
 
-    @prefix.setter
-    def prefix(self, v):
-        """
-        setter for functions to transform data and annotations, its format.
-        Arg  
-            v : you should choose from "bbox", "", ""
-        """
+    @anntype.setter
+    def anntype(self, v):
         self.__prefix = 'instances'
         if v == "bbox":
+            self.__anntype = v
             self.__prefix = 'instances'
             self.raw_transform = self.raw_bbox
             self.augmentation_albumentations = self.augmentation_bbox
             self.format = self.format_bbox
-        elif v == "pose":
+        elif v == "keypoints":
+            self.__anntype = v
             self.__prefix = 'person_keypoints'
             self.raw_transform = self.raw_keypoints
             self.augmentation_albumentations = self.augmentation_keypoints
             self.format = self.format_keypoints
         elif v == "captions":
+            self.__anntype = v
             self.__prefix = 'captions'
             self.raw_transform = None
             self.augmentation_albumentations = None
-            self.format = None
+            self.format = None        
+        else:
+            raise ValueError("choose from [bbox, keypoints, captions]")
+
+    @property
+    def prefix(self):
+        return self.__prefix
 
     @property
     def form(self):
@@ -104,12 +108,20 @@ class base_augmentation(base):
 
     @form.setter
     def form(self, v):
-        if v == "icxywh_normalized" or v == "x1y1whc" or \
-           v == "xywhc" or v == "xywhc_normalized":
-            self.__form = v
-        else:
-            self.__form = "icxywh_normalized"
-            raise ValueError("choose from [icxywh_normalized, x1y1whc, xywhc, xywhc_normalized]")
+        if self.anntype == "bbox":
+            if v == "icxywh_normalized" or v == "x1y1whc" or \
+            v == "xywhc" or v == "xywhc_normalized":
+                self.__form = v
+            else:
+                self.__form = "icxywh_normalized"
+                raise ValueError("choose from [icxywh_normalized, x1y1whc, xywhc, xywhc_normalized]")
+
+        elif self.anntype == "keypoints":
+            if v == "xyc":
+                self.__form = v
+            else:
+                raise ValueError("choose from [icxywh_normalized, x1y1whc, xywhc, xywhc_normalized]")
+        
 
     def raw_bbox(self, img, label):
         return (img, np.array(label[:, 0:4]), np.array(label[:, 4:]))

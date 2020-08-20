@@ -80,7 +80,7 @@ class coco_base(data_loader.base_augmentation):
 
     @property
     def ids_image_form(self):
-        return self.__ids_image
+        return self.__ids_image_form
 
     @ids_image_form.setter
     def ids_image_form(self, v):
@@ -112,7 +112,7 @@ class coco_base(data_loader.base_augmentation):
         ret_img = []
         __map_catID = {}
 
-        if self.__ids_image_form == "all":
+        if self.ids_image_form == "all":
             ret_img = self.coco.getImgIds()
             cats = self.coco.loadCats(self.coco.getCatIds())
             nms = [cat['name'] for cat in cats]
@@ -120,7 +120,7 @@ class coco_base(data_loader.base_augmentation):
                 catIds = self.coco.getCatIds(catNms=cat)
                 __map_catID[int(catIds[0])] = _loop
 
-        elif self.__ids_image_form == "commercial":
+        elif self.ids_image_form == "commercial":
             #ret = self.coco.getImgIds()
             cats = self.coco.loadCats(self.coco.getCatIds())
             nms = [cat['name'] for cat in cats]
@@ -133,7 +133,7 @@ class coco_base(data_loader.base_augmentation):
                     #ret.append(cc.imgs[i]['id'])
                     ret_img.append(_id)
         
-        elif self.__ids_image_form == "custom1":
+        elif self.ids_image_form == "custom1":
             
             _pickup = 100
             cats = self.coco.loadCats(self.coco.getCatIds())
@@ -151,7 +151,7 @@ class coco_base(data_loader.base_augmentation):
                     continue
                 ret_img += np.array(imgIds)[idx].tolist()
 
-        elif self.__ids_image_form == "vehicle": 
+        elif self.ids_image_form == "vehicle": 
             cats = self.coco.loadCats(self.coco.getCatIds())
             nms = ["truck", "car", "bus"]
             for _loop, cat in enumerate(nms):
@@ -195,8 +195,9 @@ class coco_base(data_loader.base_augmentation):
             #print("NO keypoints")
             #print(ann)
             return None
+        #ann['keypoints'].__len__ (21) -> joints.shape(7, 3)
         joints = np.array(ann['keypoints']).reshape((-1, 3))
-        #print(ann['keypoints'], ann['num_keypoints'], joints.shape)
+        #print(ann['keypoints'], joints.shape)
         return joints
 
 
@@ -373,10 +374,10 @@ def check_keypoints(cfg, coco, compose):
             ret[rr, cc, :] = (255, 0, 0)
         return ret
 
-    path = "./dataset/temp/"
+    path = "./img_loader/dataset/temp/"
     operator.remove_files(path)
     operator.make_directory(path)
-    cfg.ANNTYPE = 'pose'
+    cfg.ANNTYPE = 'keypoints'
     #for dtype in ["train", "val"]:
     for dtype in ["train"]:
         _data = coco(cfg, dtype, compose)
