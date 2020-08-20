@@ -1,20 +1,20 @@
 # Image loader Interface
  
-## Usage
-### coco_loader.py
+## Usage of coco_loader.py
+
 
 This class loads mini-batches that includes images with annotations from COCO format dataset.  
 Data augmentation will be done by library albumentation.  
 images and annotations will be transformed based on it.  
 this class outputs raw data image and annotations if you won't give transformer.  
 
-#### Requirement
+### Requirement
 * pycocotools
 * numpy
 * scikit-image
 * albumentation
 
-#### Ex. How to load images with annotation on each mini-batch.
+### Ex. How to load images with annotation on each mini-batch.
 ```
 from easydict import EasyDict as edict
 from dataset.augmentator import get_compose, get_compose_keypoints
@@ -34,6 +34,22 @@ imgs, annotations, dataloader.__next__()
 
 ```
 
+### How to convert data format.
+
+if you change the valibalbe .format, you can change data format.
+```
+dataloader = coco_base(cfg, "train", tf, "2017")
+dataloader.form = "icxywh_normalized"
+#dataloader.form = "x1y1whc"
+imgs, annotations, dataloader.__next__()
+```
+if you choose "icxywh_normalized", the annotations takes shape (i, c, x, y, w, h).  
+i : batch number  
+c : category number  
+x : left-upper x-coordinate of bbox  
+y : left-upper y-coordinate of bbox  
+w : width of bbox  
+h : height of bbox  
 
 
 ### How to Test coco_loader.py code
