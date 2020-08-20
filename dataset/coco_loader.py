@@ -9,34 +9,6 @@ from dataset import data_loader
 
 
 class coco_base(data_loader.base_augmentation):
-    """
-    Arg:
-        cfg : configuration given by EasyDict.
-             PATH, IDS, ANNTYPE, BATCHSIZE, NUM_CLASSES should be given. 
-             
-        data : "train", "val", "test", "check"
-
-        transformer : Compose object from albumentations should be given.
-                     image and its annotation will be augmentated by Compose.
-
-        name : the COOC dataset year(str number) that you want to use.
-    
-    Example:
-        from easydict import EasyDict as edict
-        from dataset.augmentator import get_compose, get_compose_keypoints
-        from albumentations import Compose
-        from albumentations.augmentations.transforms import Resize
-
-        cfg = edict()
-        cfg.PATH = '/data/public_data/COCO2017/'
-        cfg.ANNTYPE = 'bbox'
-        cfg.BATCHSIZE = 32
-        tf = Compose([Resize(image_height, image_width, p=1.0)],\
-                      bbox_params={'format':format, 'label_fields':['category_id']})
-
-        dataloader = coco_base(cfg, "train", tf, "2017")
-        imgs, annotations, dataloader.__next__()
-    """
 
     def __init__(self, cfg, data='train', transformer = None, name="2017"):
         super(coco_base, self).__init__(cfg, transformer)
@@ -201,6 +173,34 @@ class coco_base(data_loader.base_augmentation):
 
 
 class coco_specific(coco_base):
+    """
+    Arg:
+        cfg : configuration given by EasyDict.
+             PATH, IDS, ANNTYPE, BATCHSIZE, NUM_CLASSES should be given. 
+             
+        data : "train", "val", "test", "check"
+
+        transformer : Compose object from albumentations should be given.
+                     image and its annotation will be augmentated by Compose.
+
+        name : the COOC dataset year(str number) that you want to use.
+    
+    Example:
+        from easydict import EasyDict as edict
+        from dataset.augmentator import get_compose, get_compose_keypoints
+        from albumentations import Compose
+        from albumentations.augmentations.transforms import Resize
+
+        cfg = edict()
+        cfg.PATH = '/data/public_data/COCO2017/'
+        cfg.ANNTYPE = 'bbox'
+        cfg.BATCHSIZE = 32
+        tf = Compose([Resize(image_height, image_width, p=1.0)],\
+                      bbox_params={'format':format, 'label_fields':['category_id']})
+
+        dataloader = coco_base(cfg, "train", tf, "2017")
+        imgs, annotations, dataloader.__next__()
+    """
 
     def __init__(self, cfg, data='train', transformer = None, name="2017"):
         
@@ -376,7 +376,7 @@ def check_loader(cfg, coco, compose=None):
 
     data_ = coco(cfg, 'val', compose)
     data_.initialize_dataset()
-    data_.form = "icxywh_normalized"
+    #data_.form = "icxywh_normalized"
     #print(data_train.coco.anns.keys())
 
     for batch_idx, (img, target) in enumerate(data_):
@@ -431,7 +431,7 @@ def check_licence(cfg, coco, compose):
     for dtype in ["train", "val"]:
         data_ = coco(cfg, dtype, None)
         data_.initialize_dataset()
-        data_.form = "icxywh_normalized"
+        #data_.form = "icxywh_normalized"
         print(data_.coco.dataset.keys())
         license_num = {}
         for l in data_.coco.dataset['licenses']:
@@ -537,7 +537,6 @@ if __name__ == '__main__':
         coco = coco2017
 
     cfg.ANNTYPE = 'bbox'
-    
     cfg.IDS = 'all'
     cfg.BATCHSIZE = 30
     cfg.NUM_CLASSES = 91
@@ -567,10 +566,13 @@ if __name__ == '__main__':
         cfg.PATH = sys.argv[2]
 
     if sys.argv[1] == "loader":
+        cfg.FORM = "icxywh_normalized"
         check_loader(cfg, coco, compose)
     elif sys.argv[1] == "keypoints":
+        cfg.FORM = "xyc"
         check_keypoints(cfg, coco, None)
     elif sys.argv[1] == "bbox":
+        cfg.FORM = "icxywh_normalized"
         check_bbox(cfg, coco, compose)
         
     #check_licence(cfg, coco, compose)

@@ -67,8 +67,8 @@ class base_augmentation(base):
     def __init__(self, cfg, transformer=None):
         super(base_augmentation, self).__init__(cfg)
         self.transformer = transformer
-        self.anntype = cfg.ANNTYPE#
-        self.form = "icxywh_normalized"
+        self.anntype = cfg.ANNTYPE
+        self.form = cfg.FORM #"icxywh_normalized"
 
     @property
     def anntype(self):
