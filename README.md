@@ -1,4 +1,3 @@
-
 # Usage
 ## coco_loader.py
 
@@ -33,6 +32,18 @@ imgs, annotations, dataloader.__next__()
 
 ```
 
-#### Test coede
 
-python img_loader/dataset/coco_loader.py
+
+## How to Test code
+
+#### coco_loader.py
+
+
+* check loading  
+python img_loader/dataset/coco_loader.py loader path2COCO
+
+* chekk keypoints  
+python img_loader/dataset/coco_loader.py keypoints path2COCO
+
+* chekk bbox  
+python img_loader/dataset/coco_loader.py bbox path2COCO
