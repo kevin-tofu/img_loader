@@ -78,25 +78,24 @@ class base_augmentation(base):
     def anntype(self, v):
         self.__prefix = 'instances'
         if v == "bbox":
-            self.__anntype = v
             self.__prefix = 'instances'
             self.raw_transform = self.raw_bbox
             self.augmentation_albumentations = self.augmentation_bbox
             self.format = self.format_bbox
         elif v == "keypoints":
-            self.__anntype = v
             self.__prefix = 'person_keypoints'
             self.raw_transform = self.raw_keypoints
             self.augmentation_albumentations = self.augmentation_keypoints
             self.format = self.format_keypoints
         elif v == "captions":
-            self.__anntype = v
             self.__prefix = 'captions'
             self.raw_transform = None
             self.augmentation_albumentations = None
             self.format = None        
         else:
             raise ValueError("choose from [bbox, keypoints, captions]")
+        
+        self.__anntype = v
 
     @property
     def prefix(self):
