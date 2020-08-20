@@ -10,7 +10,6 @@ from dataset import data_loader
 
 class coco_base(data_loader.base_augmentation):
     """
-
     Arg:
         cfg : configuration given by EasyDict.
              PATH, IDS, ANNTYPE, BATCHSIZE, NUM_CLASSES should be given. 
@@ -23,6 +22,11 @@ class coco_base(data_loader.base_augmentation):
         name : the COOC dataset year(str number) that you want to use.
     
     Example:
+        from easydict import EasyDict as edict
+        from dataset.augmentator import get_compose, get_compose_keypoints
+        from albumentations import Compose
+        from albumentations.augmentations.transforms import Resize
+
         cfg = edict()
         cfg.PATH = '/data/public_data/COCO2017/'
         cfg.ANNTYPE = 'bbox'
@@ -305,7 +309,7 @@ def draw_box(img, target, fmt="xywhc"):
     return ret
 
 
-def test_bbox(cfg, coco, compose=None):
+def check_bbox(cfg, coco, compose=None):
 
     print("Check coco BBox and data augmentations")
 
@@ -335,7 +339,7 @@ def test_bbox(cfg, coco, compose=None):
             pl.imshow(c_box)
             pl.savefig(fname)
 
-def test_loader(cfg, coco, compose=None):
+def check_loader(cfg, coco, compose=None):
 
     print("Check coco dataloader")
 
@@ -350,69 +354,7 @@ def test_loader(cfg, coco, compose=None):
         d = batch_idx/len(data_) * 100
         print('[{} / {}({:.1f}%)]'.format(batch_idx, len(data_), d))
 
-
-def test_licence(cfg, coco, compose):
-
-    print("Check Licenses on images")
-
-    for dtype in ["train", "val"]:
-        data_ = coco(cfg, dtype, None)
-        data_.initialize_dataset()
-        data_.form = "icxywh_normalized"
-        print(data_.coco.dataset.keys())
-        license_num = {}
-        for l in data_.coco.dataset['licenses']:
-            license_num[l["id"]] = 0
-        
-        #for i in data_.indeces:
-        for i in data_.coco.imgs.keys():
-            id_license = data_.coco.imgs[i]['license']
-            license_num[id_license] += 1
-
-        print("------" + dtype + "------")
-        #print(data_.coco.dataset['licenses'])
-        for l in data_.coco.dataset['licenses']:
-            print(l["id"])
-            print(l["name"])
-            print(l["url"])
-
-        print(license_num)
-        print("Numbers of data", len(data_.coco.imgs))
-
-
-def test_annotations(cfg, coco, compose, year):
-    
-    print("Check Annotations on images")
-
-    for dtype in ["train", "val"]:
-
-        fname = cfg.PATH + "annotations/person_keypoints_" + dtype + year + ".json"
-        cc = COCO(fname)
-        
-        # earn ids under free licences
-        id_free_list = []
-        for i in cc.getImgIds():
-            id_license = cc.imgs[i]['license']
-            if id_license >= 4:
-                id_free_list.append(cc.imgs[i]['id'])
-        
-        N_body_free = 0
-        N_body_ALL = 0
-        ann_ids_free = cc.getAnnIds(np.array(id_free_list))
-        for _id in ann_ids_free:
-            if cc.anns[_id]['num_keypoints'] > 0:
-                N_body_free += 1
-        for _id in cc.getAnnIds():
-            if cc.anns[_id]['num_keypoints'] > 0:
-                N_body_ALL += 1
-        print("------------" + dtype + "------------")
-        print("N_imgs_free : ", len(id_free_list))
-        print("N_body_ALL : ", N_body_ALL)
-        print("N_body_free : ", N_body_free)
-        print("-------------------------------------")
-
-
-def test_keypoints(cfg, coco, compose):
+def check_keypoints(cfg, coco, compose):
 
     from utils import operator
     import matplotlib as mpl
@@ -450,7 +392,67 @@ def test_keypoints(cfg, coco, compose):
                 
             break
             
-def test_cocoapi(cfg, coco, compose, year):
+
+def check_licence(cfg, coco, compose):
+
+    print("Check Licenses on images")
+
+    for dtype in ["train", "val"]:
+        data_ = coco(cfg, dtype, None)
+        data_.initialize_dataset()
+        data_.form = "icxywh_normalized"
+        print(data_.coco.dataset.keys())
+        license_num = {}
+        for l in data_.coco.dataset['licenses']:
+            license_num[l["id"]] = 0
+        
+        #for i in data_.indeces:
+        for i in data_.coco.imgs.keys():
+            id_license = data_.coco.imgs[i]['license']
+            license_num[id_license] += 1
+
+        print("------" + dtype + "------")
+        #print(data_.coco.dataset['licenses'])
+        for l in data_.coco.dataset['licenses']:
+            print(l["id"])
+            print(l["name"])
+            print(l["url"])
+
+        print(license_num)
+        print("Numbers of data", len(data_.coco.imgs))
+
+def check_annotations(cfg, coco, compose, year):
+    
+    print("Check Annotations on images")
+
+    for dtype in ["train", "val"]:
+
+        fname = cfg.PATH + "annotations/person_keypoints_" + dtype + year + ".json"
+        cc = COCO(fname)
+        
+        # earn ids under free licences
+        id_free_list = []
+        for i in cc.getImgIds():
+            id_license = cc.imgs[i]['license']
+            if id_license >= 4:
+                id_free_list.append(cc.imgs[i]['id'])
+        
+        N_body_free = 0
+        N_body_ALL = 0
+        ann_ids_free = cc.getAnnIds(np.array(id_free_list))
+        for _id in ann_ids_free:
+            if cc.anns[_id]['num_keypoints'] > 0:
+                N_body_free += 1
+        for _id in cc.getAnnIds():
+            if cc.anns[_id]['num_keypoints'] > 0:
+                N_body_ALL += 1
+        print("------------" + dtype + "------------")
+        print("N_imgs_free : ", len(id_free_list))
+        print("N_body_ALL : ", N_body_ALL)
+        print("N_body_free : ", N_body_free)
+        print("-------------------------------------")
+
+def check_cocoapi(cfg, coco, compose, year):
     
     #for dtype in ["train", "val"]:
     dtype  = "train"
@@ -529,13 +531,20 @@ if __name__ == '__main__':
                                     hue_shift, saturation_shift, value_shift, fmt)
     #compose = None
 
-    #test_bbox(cfg, coco, compose)
-    #test_bboxloader(cfg, coco, compose)
-    #test_keypoints(cfg, coco, compose_keypoints)
-    test_keypoints(cfg, coco, None)
-    #test_licence(cfg, coco, compose)
-    #test_annotations(cfg, coco, compose, year)
-    #test_cocoapi(cfg, coco, compose, year)
+    print(sys.argv[1])
+    if len(sys.argv) > 2:
+        cfg.PATH = sys.argv[2]
+
+    if sys.argv[1] == "loader":
+        check_loader(cfg, coco, compose)
+    elif sys.argv[1] == "keypoints":
+        check_keypoints(cfg, coco, None)
+    elif sys.argv[1] == "bbox":
+        check_bbox(cfg, coco, compose)
+        
+    #check_licence(cfg, coco, compose)
+    #check_annotations(cfg, coco, compose, year)
+    #check_cocoapi(cfg, coco, compose, year)
 
 
     print("end")
