@@ -87,8 +87,8 @@ Default dataset path is /data/public_data/COCO2017/
 * check loading  
 python img_loader/dataset/coco_loader.py loader path2COCO
 
-* chekk keypoints  
+* check keypoints  
 python img_loader/dataset/coco_loader.py keypoints path2COCO
 
-* chekk bbox  
+* check bbox  
 python img_loader/dataset/coco_loader.py bbox path2COCO
