@@ -121,7 +121,6 @@ class base_augmentation(base):
                 self.__form = v
             else:
                 raise ValueError("choose from [icxywh_normalized, x1y1whc, xywhc, xywhc_normalized]")
-        
 
     def raw_bbox(self, img, label):
         return (img, np.array(label[:, 0:4]), np.array(label[:, 4:]))
