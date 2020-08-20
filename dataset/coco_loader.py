@@ -361,14 +361,6 @@ def test_licence(cfg, coco, compose):
         print("Numbers of data", len(data_.coco.imgs))
 
 
-"""
-#segmentation, num_keypoints, area, iscrowd, 
-# keypoints, image_id, bbox, category_id, id
-#print(cc.anns[_id])
-#print(cc.anns[_id]['keypoints'])#row, col, num
-#print(len(cc.anns[_id]['keypoints']))#51
-#print(cc.anns[_id]['num_keypoints'])
-"""
 def test_annotations(cfg, coco, compose, year):
     
     print("Check Annotations on images")
@@ -439,8 +431,6 @@ def test_keypoints(cfg, coco, compose):
                 
             break
             
-
-
 def test_cocoapi(cfg, coco, compose, year):
     
     #for dtype in ["train", "val"]:

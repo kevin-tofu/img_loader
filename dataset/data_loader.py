@@ -44,7 +44,24 @@ class base(object):
 
 
 class base_augmentation(base):
+    """
+    Args:
+        cfg: configuration given by EasyDict.
+             cfg.ANNTYPE and cfg.BATCHSIZE should be given. 
+             ANNTYPE should be selected from "bbox", "pose", "captions". 
+             ANNTYPE will be passed to prefix.
 
+        transformer: Compose object from albumentations should be given.
+                     image and its annotation will be augmentated by Compose.
+    Example:
+        cfg = edict()
+        cfg.ANNTYPE = 'bbox'
+        cfg.BATCHSIZE = 32
+        cm = Compose([Resize(image_height, image_width, p=1.0)],\
+                      bbox_params={'format':format, 'label_fields':['category_id']})
+        dataloader = base_augmentation(cfg, cm)
+        imgs, annotations, dataloader.__next__()
+    """
     def __init__(self, cfg, transformer=None):
         super(base_augmentation, self).__init__(cfg)
         self.transformer = transformer
@@ -117,8 +134,6 @@ class base_augmentation(base):
             return None
         return (img_trans, x1y1wh_trans, id_trans)
 
-
-
     def raw_keypoints(self, img, keypoints):
         #print(img.shape)
         if keypoints is list:
@@ -135,7 +150,6 @@ class base_augmentation(base):
         cp = np.concatenate((_class, _person), 1)
 
         return (img, keypoints_all[:, 0:2], cp)
-
 
     def augmentation_keypoints(self, img, keypoints):
 
@@ -171,26 +185,24 @@ class base_augmentation(base):
                 
         return (img_trans, key_trans, np.concatenate((class_trans, person_trans), 1))
 
-
-
     def format_bbox(self, b, data_trans, ret_targets):
 
         img_trans, x1y1wh_trans, id_trans = data_trans
 
-        if self.__form == "icxywh_normalized":
+        if self.form == "icxywh_normalized":
             b_trans = b * np.ones((x1y1wh_trans.shape[0], 1))
             xywh_trans = x1y1wh_trans / img_trans.shape[0]
             xywh_trans[:, 0:2] += xywh_trans[:, 2:4] / 2.
             label_trans = np.concatenate((b_trans, id_trans, xywh_trans), 1).tolist()
             ret_targets += label_trans
         else:
-            if self.__form == "x1y1whc":
+            if self.form == "x1y1whc":
                 label_trans = np.concatenate((x1y1wh_trans, id_trans), 1).tolist()
-            elif self.__form == "xywhc":
+            elif self.form == "xywhc":
                 xywh_trans = np.copy(x1y1wh_trans)
                 xywh_trans[:, 0:2] += xywh_trans[:, 2:4] / 2.
                 label_trans = np.concatenate((xywh_trans, id_trans), 1).tolist()
-            elif self.__form == "xywhc_normalized":
+            elif self.form == "xywhc_normalized":
                 xywh_trans = x1y1wh_trans / img_trans.shape[0]
                 xywh_trans[:, 0:2] += xywh_trans[:, 2:4] / 2.
                 label_trans = np.concatenate((xywh_trans, id_trans), 1).tolist()
@@ -202,17 +214,15 @@ class base_augmentation(base):
         ret = np.concatenate((keypoints, valid), 1)
         ret_targets.append(ret)
 
-
     def transform(self, images, targets):
-
+        #
         ret_images = []
         ret_targets = []
-
         b = 0
         #for b, (i, t) in enumerate(zip(images, targets)):
         for i, t in zip(images, targets):
             img = np.array(i)
-            label = np.array(t)# (x1, y1, w, h, c) c="id for category"
+            label = np.array(t)#
             if len(t) == 0:
                 continue
 
@@ -220,7 +230,7 @@ class base_augmentation(base):
                 # without augmentation
                 outputs = self.raw_transform(img, label)
             else:
-                # augmentation by albumentations
+                # Do augmentation by albumentations
                 outputs = self.augmentation_albumentations(img, label)
 
             if outputs is None:
