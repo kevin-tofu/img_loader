@@ -36,6 +36,7 @@ imgs, annotations, dataloader.__next__()
 
 ### How to convert data format.
 
+#### BBox format  
 if you change the valibalbe .format, you can change data format.
 ```
 dataloader = coco_base(cfg, "train", tf, "2017")
@@ -46,10 +47,10 @@ imgs, annotations, dataloader.__next__()
 if you choose "icxywh_normalized", the annotations takes shape (i, c, x, y, w, h).  
 i : batch number  
 c : category number  
-x : left-upper x-coordinate of bbox  
-y : left-upper y-coordinate of bbox  
-w : width of bbox  
-h : height of bbox  
+x : left-upper x-normalized-coordinate of bbox  
+y : left-upper y-normalized-coordinate of bbox  
+w : normalized width of bbox  
+h : normalized height of bbox  
 
 
 ### How to Test coco_loader.py code
