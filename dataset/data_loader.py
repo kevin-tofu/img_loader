@@ -44,6 +44,9 @@ class base(object):
 
 class base_augmentation(base):
     """
+    The class that is image loader with doing data augmentation using albumentation.
+    annotation basically is based on COCO format.
+
     Args:
         cfg: configuration given by EasyDict.
              cfg.ANNTYPE and cfg.BATCHSIZE should be given. 
@@ -75,6 +78,8 @@ class base_augmentation(base):
     def prefix(self, v):
         """
         setter for functions to transform data and annotations, its format.
+        Arg  
+            v : you should choose from "bbox", "", ""
         """
         self.__prefix = 'instances'
         if v == "bbox":
@@ -99,13 +104,8 @@ class base_augmentation(base):
 
     @form.setter
     def form(self, v):
-        if v == "icxywh_normalized":
-            self.__form = v
-        elif v == "x1y1whc":
-            self.__form = v
-        elif v == "xywhc":
-            self.__form = v
-        elif v == "xywhc_normalized":
+        if v == "icxywh_normalized" or v == "x1y1whc" or \
+           v == "xywhc" or v == "xywhc_normalized":
             self.__form = v
         else:
             self.__form = "icxywh_normalized"

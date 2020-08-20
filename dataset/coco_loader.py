@@ -5,20 +5,38 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import numpy as np
 from pycocotools.coco import COCO
 from skimage import io
-
-if __name__ == '__main__':
-    import data_loader
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-else:
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from dataset import data_loader
+from dataset import data_loader
 
 
 class coco_base(data_loader.base_augmentation):
+    """
 
-    def __init__(self, cfg, data='train', transformer = None, name="2014"):
+    Arg:
+        cfg : configuration given by EasyDict.
+             PATH, IDS, ANNTYPE, BATCHSIZE, NUM_CLASSES should be given. 
+             
+        data : 
+
+            
+        transformer : Compose object from albumentations should be given.
+                     image and its annotation will be augmentated by Compose.
+
+        name : the COOC dataset year(str number) that you want to use.
+    
+    Example:
+        cfg = edict()
+        cfg.PATH = '/data/public_data/COCO2017/'
+        cfg.ANNTYPE = 'bbox'
+        cfg.BATCHSIZE = 32
+        tf = Compose([Resize(image_height, image_width, p=1.0)],\
+                      bbox_params={'format':format, 'label_fields':['category_id']})
+
+        dataloader = coco_base(cfg, "train", tf, "2017")
+        imgs, annotations, dataloader.__next__()
+    """
+
+    def __init__(self, cfg, data='train', transformer = None, name="2017"):
         super(coco_base, self).__init__(cfg, transformer)
-
         self.__data = data
         self.data_dir = cfg.PATH
         self.n_class = cfg.NUM_CLASSES
@@ -36,10 +54,9 @@ class coco_base(data_loader.base_augmentation):
 
         self.dataName = self.get_dataName(data, name) # train2014
         self.img_dir = self.data_dir + '/images/' + self.dataName + '/'
-        self.annfname = '%s/annotations/%s_%s.json'%(self.data_dir, self.prefix, self.dataName)
+        self.annfname = '%sannotations/%s_%s.json'%(self.data_dir, self.prefix, self.dataName)
         print(self.annfname)
         self.coco = COCO(self.annfname)
-
         #
         self.ids_img = []
         self.map_catID = {}
@@ -51,7 +68,6 @@ class coco_base(data_loader.base_augmentation):
     def initialize_loader(self):
         self.__loop = 0
         self.indeces_batchs = self.get_indeces_batches()
-
 
     def get_dataName(self, data, name):
         if data == 'check':
@@ -326,7 +342,7 @@ def test_loader(cfg, coco, compose=None):
 
     data_ = coco(cfg, 'val', compose)
     data_.initialize_dataset()
-    data_.__form = "icxywh_normalized"
+    data_.form = "icxywh_normalized"
     #print(data_train.coco.anns.keys())
 
     for batch_idx, (img, target) in enumerate(data_):
@@ -343,7 +359,7 @@ def test_licence(cfg, coco, compose):
     for dtype in ["train", "val"]:
         data_ = coco(cfg, dtype, None)
         data_.initialize_dataset()
-        data_.__form = "icxywh_normalized"
+        data_.form = "icxywh_normalized"
         print(data_.coco.dataset.keys())
         license_num = {}
         for l in data_.coco.dataset['licenses']:
