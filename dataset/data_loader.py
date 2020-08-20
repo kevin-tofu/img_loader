@@ -21,13 +21,13 @@ class base(object):
         self.indeces = None
     @property
     def num_data(self):
-        NotImplementedError()
+        raise NotImplementedError()
 
     def __len__(self):
-        NotImplementedError()
+        raise NotImplementedError()
 
     def initialize_dataset(self):
-        NotImplementedError()
+        raise NotImplementedError()
     
     def get_indeces_batches(self):
 
