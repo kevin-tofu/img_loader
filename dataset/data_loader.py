@@ -49,7 +49,7 @@ class base_augmentation(base):
 
     Args:
         cfg: configuration given by EasyDict.
-             cfg.ANNTYPE and cfg.BATCHSIZE should be given. 
+             cfg.ANNTYPE, cfg.Form and cfg.BATCHSIZE should be given. 
              ANNTYPE should be selected from "bbox", "pose", "captions". 
              ANNTYPE will be passed to prefix.
 
@@ -58,6 +58,7 @@ class base_augmentation(base):
     Example:
         cfg = edict()
         cfg.ANNTYPE = 'bbox'
+        cfg.FORM = 'icxywh_normalized'
         cfg.BATCHSIZE = 32
         cm = Compose([Resize(image_height, image_width, p=1.0)],\
                       bbox_params={'format':format, 'label_fields':['category_id']})
@@ -183,7 +184,7 @@ class base_augmentation(base):
         # !!! caution : TODO
         #keypoints_trans = np.clip(keypoints_trans, 0, 415.9) 
         if len(key_trans) == 0:
-                return None
+            return None
                 
         return (img_trans, key_trans, np.concatenate((class_trans, person_trans), 1))
 
