@@ -102,7 +102,7 @@ class base_augmentation(base):
     @form.setter
     def form(self, v):
         if self.anntype == "bbox":
-            if v == "icxywh_normalized" or v == "x1y1whc" or \
+            if v == "icxywh_normalized" or v == "icxywh" or v == "x1y1whc" or \
             v == "xywhc" or v == "xywhc_normalized":
                 self.__form = v
             else:
@@ -198,6 +198,12 @@ class base_augmentation(base):
             xywh_trans[:, 0:2] += xywh_trans[:, 2:4] / 2.
             label_trans = np.concatenate((b_trans, id_trans, xywh_trans), 1).tolist()
             ret_targets += label_trans
+        elif self.form == "icxywh":
+            b_trans = b * np.ones((x1y1wh_trans.shape[0], 1))
+            xywh_trans = x1y1wh_trans / 1.
+            xywh_trans[:, 0:2] += xywh_trans[:, 2:4] / 2.
+            label_trans = np.concatenate((b_trans, id_trans, xywh_trans), 1).tolist()
+            ret_targets += label_trans
         else:
             if self.form == "x1y1whc":
                 label_trans = np.concatenate((x1y1wh_trans, id_trans), 1).tolist()
@@ -251,3 +257,32 @@ class base_augmentation(base):
         return ret_images, ret_targets
         
 
+class base_augmentation_3d(base_augmentation):
+    """
+    The class that is image loader with doing data augmentation using albumentation.
+    annotation basically is based on COCO format.
+
+    Args:
+        cfg: configuration given by EasyDict.
+             cfg.ANNTYPE, cfg.Form and cfg.BATCHSIZE should be given. 
+             ANNTYPE should be selected from "bbox", "pose", "captions". 
+             ANNTYPE will be passed to prefix.
+
+        transformer: Compose object from albumentations should be given.
+                     image and its annotation will be augmentated by Compose.
+    Example:
+        cfg = edict()
+        cfg.ANNTYPE = 'bbox'
+        cfg.FORM = 'icxywh_normalized'
+        cfg.BATCHSIZE = 32
+        cm = Compose([Resize(image_height, image_width, p=1.0)],\
+                      bbox_params={'format':format, 'label_fields':['category_id']})
+        dataloader = base_augmentation(cfg, cm)
+        imgs, annotations, dataloader.__next__()
+    """
+    def __init__(self, cfg, transformer=None):
+        super(base_augmentation_3d, self).__init__(cfg)
+        self.transformer = transformer
+        self.anntype = cfg.ANNTYPE
+        self.form = cfg.FORM #"icxywh_normalized"
+        
