@@ -27,7 +27,7 @@ conda install -c conda-forge scikit-image
 git clone --recursive http://10.115.1.14/kohei/img_loader.git  
 ```
 
-## Configuration of Directory Hierarchy   
+## Directory Hierarchy Configuration   
 Annotations should be denoted by coco format.  
 ```
 directory (COCO****)
