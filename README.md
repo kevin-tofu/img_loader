@@ -3,7 +3,7 @@ This repository is a dataloader that outputs annotations for Machine Learning pu
 The feature of this repository is that  
 * images and its annotation that is written in COCO format can be loaded easily
 * can make data augmentation if you give data augmentation function.  
-  (Now, Only libraly that can be used is albumentations [https://github.com/albumentations-team/albumentations].)  
+  (Now, Only libraly that can be used is albumentations [ https://github.com/albumentations-team/albumentations ].)  
 * can get annotations in several formats if you change a parameter.
 
 
@@ -14,11 +14,17 @@ The feature of this repository is that
 * scikit-image
 
 ## Installation
+### Install libraries
 ```
 conda install -c conda-forge pycocotools
 conda install -c conda-forge albumentations
 conda install -c conda-forge numpy
 conda install -c conda-forge scikit-image
+```
+
+### Pull repository
+```
+git clone --recursive http://10.115.1.14/kohei/img_loader.git  
 ```
 
 ## Configuration of Directory Hierarchy   
