@@ -19,6 +19,8 @@ class base(object):
 
         self.batchsize = cfg.BATCHSIZE
         self.indeces = None
+        self.set_keys()
+        
     @property
     def num_data(self):
         raise NotImplementedError()
@@ -40,6 +42,36 @@ class base(object):
 
     def __next__(self):
         NotImplementedError()
+
+    def set_keys(self):
+        self.__keys_bbox = []
+        self.__keys_bbox.append("icxywh_normalized")
+        self.__keys_bbox.append("icxywh")
+        self.__keys_bbox.append("x1y1whc")
+        self.__keys_bbox.append("xywhc")
+        self.__keys_bbox.append("xywhc_normalized")
+
+        self.__keys_keypoints = []
+        self.__keys_keypoints.append("xyc")
+
+    @property
+    def form(self):
+        return self.__form
+
+    @form.setter
+    def form(self, v):
+        if self.anntype == "bbox":
+            if v in self.__keys_bbox:
+                self.__form = v
+            else:
+                self.__form = "icxywh_normalized"
+                raise ValueError("choose from [icxywh_normalized, x1y1whc, xywhc, xywhc_normalized]")
+
+        elif self.anntype == "keypoints":
+            if v in __keys_keypoints:
+                self.__form = v
+            else:
+                raise ValueError("choose from [xyc]")
 
 
 class base_augmentation(base):
@@ -94,26 +126,6 @@ class base_augmentation(base):
             raise ValueError("choose from [bbox, keypoints, captions]")
         
         self.__anntype = v
-
-    @property
-    def form(self):
-        return self.__form
-
-    @form.setter
-    def form(self, v):
-        if self.anntype == "bbox":
-            if v == "icxywh_normalized" or v == "icxywh" or v == "x1y1whc" or \
-            v == "xywhc" or v == "xywhc_normalized":
-                self.__form = v
-            else:
-                self.__form = "icxywh_normalized"
-                raise ValueError("choose from [icxywh_normalized, x1y1whc, xywhc, xywhc_normalized]")
-
-        elif self.anntype == "keypoints":
-            if v == "xyc":
-                self.__form = v
-            else:
-                raise ValueError("choose from [icxywh_normalized, x1y1whc, xywhc, xywhc_normalized]")
 
     def raw_bbox(self, img, label):
         return (img, np.array(label[:, 0:4]), np.array(label[:, 4:]))
