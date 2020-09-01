@@ -128,6 +128,10 @@ dataloader = coco_specific(cfg, "train", tf, "2017")
 imgs, annotations, dataloader.__next__()
 ```
 
+### How to load specific images
+Custom loader should be inherited If you want to load specific images in datasets
+
+
 ### How to test coco_loader.py code
 
 #### coco_loader.py
