@@ -14,7 +14,7 @@ The feature of this repository is that
 * scikit-image
 
 ## Installation
-### Install libraries
+### Install libraries to conda environment
 ```
 conda install -c conda-forge pycocotools
 conda install -c conda-forge albumentations
