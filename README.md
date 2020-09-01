@@ -9,9 +9,17 @@ The feature of this repository is that
 
 ## Requirement
 * pycocotools
+* albumentations
 * numpy
 * scikit-image
-* albumentation
+
+## Installation
+```
+conda install -c conda-forge pycocotools
+conda install -c conda-forge albumentations
+conda install -c conda-forge numpy
+conda install -c conda-forge scikit-image
+```
 
 ## Directory Configuration  
 Annotations should be denoted by coco format.  
