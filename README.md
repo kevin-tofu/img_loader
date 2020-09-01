@@ -1,8 +1,11 @@
 # Image loader Interface
-This repository is a dataloader that outputs annotations and images written in COCO format. And you can make data augmentation at the same time. You will get converted images and its keypoints or bbox if you set functions properly.  
-(Now, Only libraly that can be used is albumentations[https://github.com/albumentations-team/albumentations] on this repository.)  
+This repository is a dataloader that outputs annotations for Machine Learning purpose.  
+The feature of this repository is that  
+* images and its annotation that is written in COCO format can be loaded easily
+* can make data augmentation if you give data augmentation function.  
+  (Now, Only libraly that can be used is albumentations [https://github.com/albumentations-team/albumentations].)  
+* can get annotations in several formats if you change a parameter.
 
-And you will get annotations in several formats. it is only to change a parameter.  
 
 ## Requirement
 * pycocotools
