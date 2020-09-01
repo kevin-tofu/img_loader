@@ -21,7 +21,7 @@ conda install -c conda-forge numpy
 conda install -c conda-forge scikit-image
 ```
 
-## Directory Configuration  
+## Configuration of Directory Hierarchy   
 Annotations should be denoted by coco format.  
 ```
 directory (COCO****)
