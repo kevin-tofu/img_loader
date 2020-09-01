@@ -1,5 +1,33 @@
 # Image loader Interface
+
+## Directory
+```
+directory (COCO****)
+  |-annotations
+  |   |-captions_train****.json
+  |   |-captions_val****.json
+  |   |-instances_train****.json
+  |   |-instances_val****.json
+  |   |-person_keypoints_train****.json
+  |   |-person_keypoints_val****.json
+  |
+  |-images
+  |   |-train****
+  |        |-0000001.jpg
+  |        |-0000002.jpg
+  |        |-0000003.jpg
+  |        |-.....
+  |        |-.....
+  |   |-val****
+  |        |-0000001.jpg
+  |        |-0000002.jpg
+  |        |-0000003.jpg
+  |        |-.....
+  |        |-.....
+
  
+```
+
 ## Usage of coco_loader.py
 
 
