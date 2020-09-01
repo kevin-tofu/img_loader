@@ -22,7 +22,7 @@ conda install -c conda-forge numpy
 conda install -c conda-forge scikit-image
 ```
 
-### Pull repository
+### Clone repository
 ```
 git clone --recursive http://10.115.1.14/kohei/img_loader.git  
 ```
