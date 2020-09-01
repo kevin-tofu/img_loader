@@ -1,16 +1,29 @@
 # Image loader Interface
+This repository is a dataloader that outputs annotations and images written in COCO format, 　
+and You can make data augmentation at the same time.  
+You will get converted images and its keypoints or bbox if you set functions properly.  
+(Now, Only libraly that can be used is albumentations[https://github.com/albumentations-team/albumentations] on this repository.)  
 
-## Directory
+And you will get annotations in several formats only to change a parameter.
+
+## Requirement
+* pycocotools
+* numpy
+* scikit-image
+* albumentation
+
+## Directory Configuration  
+Annotations should be denoted by coco format.  
 ```
 directory (COCO****)
   |-annotations
-  |   |-captions_train****.json
-  |   |-captions_val****.json
+  |
   |   |-instances_train****.json
   |   |-instances_val****.json
   |   |-person_keypoints_train****.json
   |   |-person_keypoints_val****.json
-  |
+  |   |-captions_train****.json
+  |   |-captions_val****.json
   |-images
   |   |-train****
   |        |-0000001.jpg
@@ -29,18 +42,11 @@ directory (COCO****)
 ```
 
 ## Usage of coco_loader.py
-
-
 This class loads mini-batches that includes images with annotations from COCO format dataset.  
 Data augmentation will be done by library albumentation.  
 images and annotations will be transformed based on it.  
 this class outputs raw data image and annotations if you won't give transformer.  
 
-### Requirement
-* pycocotools
-* numpy
-* scikit-image
-* albumentation
 
 ### Ex. How to load images with annotation on each mini-batch.
 ```
@@ -55,7 +61,7 @@ cfg.ANNTYPE = 'bbox'
 cfg.BATCHSIZE = 32
 h, w = 416, 416
 tf = Compose([Resize(h, w, p=1.0)],\
-              bbox_params={'format':format, 'label_fields':['category_id']})
+              bbox_params={'format':'coco', 'label_fields':['category_id']})
 
 dataloader = coco_specific(cfg, "train", tf, "2017")
 imgs, annotations, dataloader.__next__()
