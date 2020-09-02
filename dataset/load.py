@@ -82,18 +82,25 @@ def get_val(cfg):
 
 def get_test(cfg):
 
+    #dtype = "test"
+    dtype = "val"
+    cfg.DATASET.IDS = cfg.DATASET.IDS_test
+
     if cfg.DATASET.NAME == 'chair_trans':
-        test = chair_renderer.chair_randomRT(cfg.DATASET, 'test')
+        print('chair_trans')
+        loader = chair_renderer.chair_randomRT(cfg.DATASET, dtype, cfg.DATASET.AUGMENTATOR_val)
+    
+    elif cfg.DATASET.NAME == 'chair_trans2':
+        print('chair_trans')
+        loader = chair_renderer.chair_randomRT(cfg.DATASET, dtype, cfg.DATASET.AUGMENTATOR_val)
 
     elif cfg.DATASET.NAME == 'COCO2017':
-        test = coco_loader.coco2017(cfg.DATASET, 'test')
+        print('COCO 2017 ')
+        loader = coco_loader.coco2017(cfg.DATASET, dtype, cfg.DATASET.AUGMENTATOR_val)
 
     elif cfg.DATASET.NAME == 'COCO2014':
         print('COCO 2014 ')
-        #test = coco_loader.coco2014(DATASET, 'test')
-        test = coco_loader.coco2014(cfg.DATASET, 'val')
+        loader = coco_loader.coco2014(cfg.DATASET, dtype, cfg.DATASET.AUGMENTATOR_val)
 
-    
-    
+    return loader
 
-    return test
