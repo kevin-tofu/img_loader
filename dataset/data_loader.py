@@ -65,14 +65,43 @@ class base(object):
                 self.__form = v
             else:
                 self.__form = "icxywh_normalized"
-                raise ValueError("choose from [icxywh_normalized, x1y1whc, xywhc, xywhc_normalized]")
+                cmt = ""
+                for loop in self.__keys_bbox:
+                    cmt += loop + ", "
+                raise ValueError("choose from " + cmt)
 
         elif self.anntype == "keypoints":
             if v in __keys_keypoints:
                 self.__form = v
             else:
-                raise ValueError("choose from [xyc]")
+                cmt = ""
+                for loop in self.__keys_keypoints:
+                    cmt += loop + ", "
+                raise ValueError("choose from " + cmt)
 
+    @property
+    def anntype(self):
+        return self.__anntype
+
+    @anntype.setter
+    def anntype(self, v):
+        self.__prefix = 'instances'
+        if v == "bbox":
+            self.raw_transform = self.raw_bbox
+            self.augmentation_albumentations = self.augmentation_bbox
+            self.format = self.format_bbox
+        elif v == "keypoints":
+            self.raw_transform = self.raw_keypoints
+            self.augmentation_albumentations = self.augmentation_keypoints
+            self.format = self.format_keypoints
+        elif v == "captions":
+            self.raw_transform = None
+            self.augmentation_albumentations = None
+            self.format = None        
+        else:
+            raise ValueError("choose from [bbox, keypoints, captions]")
+        
+        self.__anntype = v
 
 class base_augmentation(base):
     """
@@ -103,29 +132,6 @@ class base_augmentation(base):
         self.anntype = cfg.ANNTYPE
         self.form = cfg.FORM #"icxywh_normalized"
 
-    @property
-    def anntype(self):
-        return self.__anntype
-
-    @anntype.setter
-    def anntype(self, v):
-        self.__prefix = 'instances'
-        if v == "bbox":
-            self.raw_transform = self.raw_bbox
-            self.augmentation_albumentations = self.augmentation_bbox
-            self.format = self.format_bbox
-        elif v == "keypoints":
-            self.raw_transform = self.raw_keypoints
-            self.augmentation_albumentations = self.augmentation_keypoints
-            self.format = self.format_keypoints
-        elif v == "captions":
-            self.raw_transform = None
-            self.augmentation_albumentations = None
-            self.format = None        
-        else:
-            raise ValueError("choose from [bbox, keypoints, captions]")
-        
-        self.__anntype = v
 
     def raw_bbox(self, img, label):
         return (img, np.array(label[:, 0:4]), np.array(label[:, 4:]))

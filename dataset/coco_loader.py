@@ -24,7 +24,11 @@ class coco_base(data_loader.base_augmentation):
             self.get_annotation = self.get_keypoints
 
         self.pycocoloader(cfg, data, transformer, name)
-        self.initialize_dataset()
+
+    def initialize_loader(self):
+        self.get_ids_image()
+        self.__loop = 0
+        self.indeces_batchs = self.get_indeces_batches()
         
     def get_prefix(self, v):
         __prefix = 'instances'
@@ -55,18 +59,13 @@ class coco_base(data_loader.base_augmentation):
         self.ids_img = []
         self.map_catID = {}
 
-    def initialize_dataset(self):
-        self.get_ids_image()
-        self.initialize_loader()
 
-    def initialize_loader(self):
-        self.__loop = 0
-        self.indeces_batchs = self.get_indeces_batches()
+    def get_ids_image(self):
+        raise NotImplementedError()
 
     def __next__(self):
         if self.__loop >= len(self.indeces_batchs):
-            #self.initialize_loader()
-            self.initialize_dataset()
+            self.initialize_loader()
             raise StopIteration()
         _ids = self.indeces_batchs[self.__loop]
         img_list, target_list = self.load(_ids)
@@ -80,12 +79,6 @@ class coco_base(data_loader.base_augmentation):
         nms = [str(i+1) for i in range(self.n_class)]
         return nms
 
-    def get_ids_image(self):
-        #__ret_img = []
-        #__map_catID = {}
-        #self.ids_img = __ret_img
-        #self.map_catID = __map_catID
-        raise NotImplementedError()
 
     @property
     def num_data(self):
@@ -171,8 +164,114 @@ class coco_base(data_loader.base_augmentation):
         return img_list, target_list
 
 
+def func_all(coco):
+    __ret_img = self.coco.getImgIds()
+    cats = self.coco.loadCats(self.coco.getCatIds())
+    nms = [cat['name'] for cat in cats]
+    for _loop, cat in enumerate(nms):
+        catIds = self.coco.getCatIds(catNms=cat)
+        __map_catID[int(catIds[0])] = _loop
+    return __ret_img, __map_catID
 
-class coco_specific(coco_base):
+
+
+
+def func_all(coco):
+    __ret_img = []
+    __map_catID = {}
+    __ret_img = coco.getImgIds()
+    cats = coco.loadCats(coco.getCatIds())
+    nms = [cat['name'] for cat in cats]
+    for _loop, cat in enumerate(nms):
+        catIds = coco.getCatIds(catNms=cat)
+        __map_catID[int(catIds[0])] = _loop
+    return __ret_img, __map_catID
+    
+def func_commercial(coco):
+    __ret_img = []
+    __map_catID = {}
+    cats = coco.loadCats(coco.getCatIds())
+    nms = [cat['name'] for cat in cats]
+    for _loop, cat in enumerate(nms):
+        catIds = coco.getCatIds(catNms=cat)
+        __map_catID[int(catIds[0])] = _loop
+    for _id in coco.getImgIds():
+        id_license = coco.imgs[_id]['license']
+        if id_license >= 4:
+            #ret.append(cc.imgs[i]['id'])
+            __ret_img.append(_id)
+    return __ret_img, __map_catID
+    
+def func_custom1(coco):
+    __ret_img = []
+    __map_catID = {}
+    _pickup = 100
+    cats = coco.loadCats(coco.getCatIds())
+    nms = [cat['name'] for cat in cats]
+    #print("nms", nms, len(nms))
+    for _loop, cat in enumerate(nms):
+        catIds = coco.getCatIds(catNms=cat)
+        imgIds = coco.getImgIds(catIds=catIds)
+        __map_catID[int(catIds[0])] = _loop
+        #print(_loop, catIds[0])
+        #print(cat, len(imgIds))
+        if len(imgIds) != 0:
+            idx = np.random.choice(len(imgIds), _pickup)
+        else:
+            continue
+        __ret_img += np.array(imgIds)[idx].tolist()
+    return __ret_img, __map_catID
+
+
+def func_vehicle(coco):
+    __ret_img = []
+    __map_catID = {}
+    cats = coco.loadCats(coco.getCatIds())
+    nms = ["truck", "car", "bus"]
+    for _loop, cat in enumerate(nms):
+        catIds = coco.getCatIds(catNms=cat)
+        imgIds = coco.getImgIds(catIds=catIds)
+        __map_catID[int(catIds[0])] = _loop
+        __ret_img += imgIds
+    return __ret_img, __map_catID
+
+
+class coco_base_specific(coco_base):
+
+    def __init__(self, cfg, data='train', transformer = None, name="2017"):
+        super(coco_base_specific, self).__init__(cfg, data, transformer, name)
+        
+        self.ids_funcs = {}
+        self.set_ids_function("all", func_all)
+
+    @property
+    def ids_image_form(self):
+        return self.__ids_image_form
+
+    @ids_image_form.setter
+    def ids_image_form(self, v):
+        if v in self.ids_funcs.keys():
+            self.__ids_image_form = v
+        else:
+            self.__ids_image_form = "commercial"
+            cmt = ""
+            for loop in self.ids_funcs.keys():
+                cmt += loop + ", "
+            raise ValueError("choose from " + cmt)
+
+    def get_ids_image(self):
+
+        key = self.ids_image_form
+        if key in self.ids_funcs.keys():
+            self.ids_img, self.map_catID = self.ids_funcs[key](self.coco)
+        else:
+            raise ValueError("set ids_image_form correctly")
+
+    def set_ids_function(self, key4func, func):
+        self.ids_funcs[key4func] = func
+
+
+class coco_specific(coco_base_specific):
     """
     Arg:
         cfg : configuration given by EasyDict.
@@ -204,78 +303,14 @@ class coco_specific(coco_base):
 
     def __init__(self, cfg, data='train', transformer = None, name="2017"):
         
-        self.ids_image_form = cfg.IDS #'all', ''
         super(coco_specific, self).__init__(cfg, data, transformer, name)
         
+        self.set_ids_function("commercial", func_commercial)
+        self.set_ids_function("custom1", func_custom1)
+        self.set_ids_function("vehicle", func_vehicle)
 
-    @property
-    def ids_image_form(self):
-        return self.__ids_image_form
-
-    @ids_image_form.setter
-    def ids_image_form(self, v):
-        if v == "all" or v == "commercial" or v == "custom1" or v == "vehicle":
-            self.__ids_image_form = v
-        else:
-            self.__ids_image_form = "commercial"
-            raise ValueError("choose from [all, custom1, vehicle, commercial]")    
-
-    def get_ids_image(self):
-
-        __ret_img = []
-        __map_catID = {}
-
-        if self.ids_image_form == "all":
-            __ret_img = self.coco.getImgIds()
-            cats = self.coco.loadCats(self.coco.getCatIds())
-            nms = [cat['name'] for cat in cats]
-            for _loop, cat in enumerate(nms):
-                catIds = self.coco.getCatIds(catNms=cat)
-                __map_catID[int(catIds[0])] = _loop
-
-        elif self.ids_image_form == "commercial":
-            #ret = self.coco.getImgIds()
-            cats = self.coco.loadCats(self.coco.getCatIds())
-            nms = [cat['name'] for cat in cats]
-            for _loop, cat in enumerate(nms):
-                catIds = self.coco.getCatIds(catNms=cat)
-                __map_catID[int(catIds[0])] = _loop
-            for _id in self.coco.getImgIds():
-                id_license = self.coco.imgs[_id]['license']
-                if id_license >= 4:
-                    #ret.append(cc.imgs[i]['id'])
-                    __ret_img.append(_id)
-        
-        elif self.ids_image_form == "custom1":
-            
-            _pickup = 100
-            cats = self.coco.loadCats(self.coco.getCatIds())
-            nms = [cat['name'] for cat in cats]
-            #print("nms", nms, len(nms))
-            for _loop, cat in enumerate(nms):
-                catIds = self.coco.getCatIds(catNms=cat)
-                imgIds = self.coco.getImgIds(catIds=catIds)
-                __map_catID[int(catIds[0])] = _loop
-                #print(_loop, catIds[0])
-                #print(cat, len(imgIds))
-                if len(imgIds) != 0:
-                    idx = np.random.choice(len(imgIds), _pickup)
-                else:
-                    continue
-                __ret_img += np.array(imgIds)[idx].tolist()
-
-        elif self.ids_image_form == "vehicle": 
-            cats = self.coco.loadCats(self.coco.getCatIds())
-            nms = ["truck", "car", "bus"]
-            for _loop, cat in enumerate(nms):
-                catIds = self.coco.getCatIds(catNms=cat)
-                imgIds = self.coco.getImgIds(catIds=catIds)
-                __map_catID[int(catIds[0])] = _loop
-                __ret_img += imgIds
-                
-        self.ids_img = __ret_img
-        self.map_catID = __map_catID
-        #self.num_data = len(self.ids_img)
+        self.ids_image_form = cfg.IDS #'all', ''
+        self.initialize_loader()
 
 
 class coco2014(coco_specific):
@@ -375,7 +410,7 @@ def check_loader(cfg, coco, compose=None):
     print("Check coco dataloader")
 
     data_ = coco(cfg, 'val', compose)
-    data_.initialize_dataset()
+    data_.initialize_loader()
     #data_.form = "icxywh_normalized"
     #print(data_train.coco.anns.keys())
 
@@ -430,7 +465,7 @@ def check_licence(cfg, coco, compose):
 
     for dtype in ["train", "val"]:
         data_ = coco(cfg, dtype, None)
-        data_.initialize_dataset()
+        data_.initialize_loader()
         #data_.form = "icxywh_normalized"
         print(data_.coco.dataset.keys())
         license_num = {}
