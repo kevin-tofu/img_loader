@@ -253,7 +253,7 @@ class coco_base_specific(coco_base):
         print(v)
         print(self.ids_funcs.keys())
         if v in self.ids_funcs.keys():
-            self.__ids_image_form = _v
+            self.__ids_image_form = v
         else:
             self.__ids_image_form = "commercial"
             cmt = ""
