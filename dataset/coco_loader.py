@@ -250,8 +250,10 @@ class coco_base_specific(coco_base):
 
     @ids_image_form.setter
     def ids_image_form(self, v):
+        print(v)
+        print(self.ids_funcs.keys())
         if v in self.ids_funcs.keys():
-            self.__ids_image_form = v
+            self.__ids_image_form = _v
         else:
             self.__ids_image_form = "commercial"
             cmt = ""
