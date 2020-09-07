@@ -16,6 +16,25 @@ def get_compose_resize(image_height, image_width, format):
                     Normalize(always_apply=True)],\
                     bbox_params={'format':format, 'label_fields':['category_id']})
 
+
+def get_compose_resize2(image_height, image_width, format):
+
+    return Compose([Resize(image_height, image_width, p=1.0),\
+                    HorizontalFlip(p=0.5),\
+                    Blur(p=0.1), \
+                    Normalize(always_apply=True)], \
+                    bbox_params={'format':format, 'label_fields':['category_id']})
+
+def get_compose_resize3(crop_min_max, image_height, image_width, format):
+
+    return Compose([Resize(image_height, image_width, p=1.0),\
+                    HorizontalFlip(p=0.5),\
+                    RandomSizedCrop(crop_min_max, image_height, image_width, p=0.2),\
+                    Blur(p=0.1), \
+                    Normalize(always_apply=True)], \
+                    bbox_params={'format':format, 'label_fields':['category_id']})
+
+
 def get_compose(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
 
     return Compose([Resize(image_height, image_width, p=1.0),\
@@ -24,7 +43,7 @@ def get_compose(crop_min_max, image_height, image_width, hue_shift, saturation_s
                     HueSaturationValue(hue_shift, saturation_shift, value_shift, p=0.2),\
                     RandomGamma(p=0.5), \
                     GaussNoise(p=0.2), \
-                    Blur(p=0.3), \
+                    Blur(p=0.1), \
                     RGBShift(p=0.2), \
                     Normalize(always_apply=True)], \
                     bbox_params={'format':format, 'label_fields':['category_id']})
