@@ -205,7 +205,7 @@ def func_commercial(coco):
 def func_custom1(coco):
     __ret_img = []
     __map_catID = {}
-    _pickup = 100
+    _pickup = 200
     cats = coco.loadCats(coco.getCatIds())
     nms = [cat['name'] for cat in cats]
     #print("nms", nms, len(nms))
