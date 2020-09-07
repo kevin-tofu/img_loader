@@ -30,7 +30,8 @@ def get_compose_resize3(crop_min_max, image_height, image_width, format):
     return Compose([Resize(image_height, image_width, p=1.0),\
                     HorizontalFlip(p=0.5),\
                     RandomSizedCrop(crop_min_max, image_height, image_width, p=0.2),\
-                    Blur(p=0.1), \
+                    Blur(p=0.05), \
+                    GaussNoise(p=0.25), \
                     Normalize(always_apply=True)], \
                     bbox_params={'format':format, 'label_fields':['category_id']})
 
