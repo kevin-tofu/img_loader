@@ -275,6 +275,167 @@ class base_augmentation(base):
         return ret_images, ret_targets
         
 
+class base_augmentation0(base):
+    """
+    The class that is image loader with doing data augmentation using albumentation.
+    annotation basically is based on COCO format.
+
+    Args:
+        cfg: configuration given by EasyDict.
+             cfg.ANNTYPE, cfg.Form and cfg.BATCHSIZE should be given. 
+             ANNTYPE should be selected from "bbox", "pose", "captions". 
+             ANNTYPE will be passed to prefix.
+
+        transformer: Compose object from albumentations should be given.
+                     image and its annotation will be augmentated by Compose.
+    Example:
+        cfg = edict()
+        cfg.ANNTYPE = 'bbox'
+        cfg.FORM = 'icxywh_normalized'
+        cfg.BATCHSIZE = 32
+        cm = Compose([Resize(image_height, image_width, p=1.0)],\
+                      bbox_params={'format':format, 'label_fields':['category_id']})
+        dataloader = base_augmentation(cfg, cm)
+        imgs, annotations, dataloader.__next__()
+    """
+    def __init__(self, cfg, transformer=None):
+        super(base_augmentation0, self).__init__(cfg)
+        self.transformer = transformer
+        self.anntype = cfg.ANNTYPE
+        self.form = cfg.FORM #"icxywh_normalized"
+
+
+    def raw_bbox(self, images, labels):
+
+        x1y1wh_trans = []
+        id_trans = []
+        for i, l in enumerate(labels):
+            labels[i] = np.array(l)
+            labels[i][:, 2:4] = np.clip(labels[i][:, 2:4], 0.1, 416 - 0.1) 
+            x1y1wh_trans.append(labels[i][0:4])
+            id_trans.append(labels[i][4:])
+
+        return (images, x1y1wh_trans, id_trans)
+
+    def augmentation_bbox(self, images, labels):
+        
+        #print(label, img.shape, "raw")
+        # !!! caution : TODO
+        for i, l in enumerate(labels):
+            labels[i] = np.array(l)
+            labels[i][:, 2:4] = np.clip(labels[i][:, 2:4], 0.1, 416 - 0.1) 
+
+        augmented = [self.transformer(image = img, bboxes=label[:, 0:4], category_id= label[:, 4]) for img, label in zip(images, labels)]
+        #img_trans = augmented['image']
+        img_trans = [a["image"] for a in augmented]
+        #img_trans = np.concatenate([a["images"] for a in augmented], axis=3)
+
+        x1y1wh_trans = [np.clip(a["bboxes"], 0, 415.9)  for a in augmented]
+        id_trans = [np.array(a['category_id'])[:, np.newaxis]  for a in augmented]
+
+        no_annotated = []
+        for i, a in enumerate(augmented):
+            if len(a["bboxes"]) == 0:
+                no_annotated.append(i)
+        if len(no_annotated) > 0:
+            print("no_annotated", len(no_annotated))
+            dellist = lambda items, indexes: [item for index, item in enumerate(items) if index not in indexes]
+            img_trans = dellist(img_trans, no_annotated)
+            x1y1wh_trans = dellist(x1y1wh_trans, no_annotated)
+            id_trans = dellist(id_trans, no_annotated)
+
+        return (img_trans, x1y1wh_trans, id_trans)
+
+    def raw_keypoints(self, img, keypoints):
+        #print(img.shape)
+        if keypoints is list:
+            keypoints = np.array(keypoints)
+        keypoints_all = keypoints.reshape((keypoints.shape[0] * keypoints.shape[1], 3))
+
+        _class = []
+        _person = []
+        for loop in range(keypoints.shape[0]):
+            _class.append(range(keypoints.shape[1]))
+            _person.append(np.ones(keypoints.shape[1]).tolist())
+        _class = np.array(_class).reshape((keypoints.shape[0] * keypoints.shape[1], 1))
+        _person = np.array(_person).reshape((keypoints.shape[0] * keypoints.shape[1], 1))
+        cp = np.concatenate((_class, _person), 1)
+
+        return (img, keypoints_all[:, 0:2], cp)
+
+    def augmentation_keypoints(self, img, keypoints):
+
+        #keypoints (1, 17, 3)
+        keypoints = np.array(keypoints)
+        _, _, cp = self.raw_keypoints(img, keypoints)
+        _class, _person = cp[:, 0], cp[:, 1]
+
+        # !!! caution : TODO
+        keypoints_all = keypoints.reshape((keypoints.shape[0] * keypoints.shape[1], 3))
+        keypoints_all[:, 0:2] = np.clip(keypoints_all[:, 0:2], 0.1, 416 - 0.1)
+        conf = np.argwhere((keypoints_all[:, 2] == 2))[:, 0]
+        #person_select = [str(l) for l in person[conf]]
+
+        class_select = _class[conf]
+        person_select = _person[conf]
+
+        annotation = {'image': img, \
+                      'keypoints':keypoints_all[:, 0:2][conf], \
+                      'class': class_select, \
+                      'person': person_select}
+
+        augmented = self.transformer(**annotation)
+        img_trans = augmented['image']
+        key_trans = np.array(augmented['keypoints'])
+        class_trans = np.array(augmented['class'])[:, np.newaxis]
+        person_trans = np.array(augmented['person'])[:, np.newaxis]
+        
+        # !!! caution : TODO
+        #keypoints_trans = np.clip(keypoints_trans, 0, 415.9) 
+        if len(key_trans) == 0:
+            return None
+                
+        return (img_trans, key_trans, np.concatenate((class_trans, person_trans), 1))
+
+    def format_bbox(self, x1y1wh_trans, id_trans):
+
+        if self.form == "icxywh_normalized":
+            pass
+        elif self.form == "icxywh":
+            pass
+        else:
+            if self.form == "x1y1whc":
+                pass
+            elif self.form == "xywhc":
+                ret = [np.concatenate([_xywh, _id], axis = 1) for _xywh, _id in zip(x1y1wh_trans, id_trans)]
+
+            elif self.form == "xywhc_normalized":
+                pass
+        
+        return ret
+
+
+    def format_keypoints(self, b, data_trans, ret_targets):
+
+        keypoints, valid = data_trans[1], data_trans[2]
+        ret = np.concatenate((keypoints, valid), 1)
+        ret_targets.append(ret)
+
+    def transform(self, images, targets):
+        #
+        if self.transformer is None:
+            # without augmentation
+            img_trans, x1y1wh_trans, id_trans = self.raw_transform(images, targets)
+        else:
+            # Do augmentation by albumentations
+            img_trans, x1y1wh_trans, id_trans = self.augmentation_albumentations(images, targets)
+
+        ret_targets = self.format(x1y1wh_trans, id_trans)
+
+        return img_trans, ret_targets
+        
+
+
 class base_augmentation_3d(base_augmentation):
     """
     The class that is image loader with doing data augmentation using albumentation.

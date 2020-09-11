@@ -6,9 +6,10 @@ from pycocotools.coco import COCO
 from skimage import io
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from dataset import data_loader
+import time
 
-
-class coco_base(data_loader.base_augmentation):
+#class coco_base(data_loader.base_augmentation):
+class coco_base(data_loader.base_augmentation0):
 
     def __init__(self, cfg, data='train', transformer = None, name="2017"):
         super(coco_base, self).__init__(cfg, transformer)
@@ -131,8 +132,11 @@ class coco_base(data_loader.base_augmentation):
                 print("no file")
                 continue
             else:
+                #start = time.time()
                 img = io.imread(img_path)
+                #print ("load image:{0}".format(time.time() - start) + "[sec]")
                 #print(np.max(img), np.min(img))#0-255
+
                 if img.ndim == 2:
                     img = np.expand_dims(img, 2)
                     img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3))
@@ -144,6 +148,8 @@ class coco_base(data_loader.base_augmentation):
 
             if len(anns) == 0:
                 continue
+
+            #start = time.time()
             for ann in anns:
                 #print(ann)
                 ret = self.get_annotation(ann)
@@ -152,6 +158,7 @@ class coco_base(data_loader.base_augmentation):
                     continue
                 else:
                     target.append(ret)
+            #print ("Get annotation:{0}".format(time.time() - start) + "[sec]")
 
             if len(target) == 0:
                 continue
@@ -159,21 +166,11 @@ class coco_base(data_loader.base_augmentation):
                 target_list.append(target)
                 img_list.append(img)
         
+        #start = time.time()
         img_list, target_list = self.transform(img_list, target_list)
+        #print ("transform images and annotations:{0}".format(time.time() - start) + "[sec]")
         #print(target_list)
         return img_list, target_list
-
-
-def func_all(coco):
-    __ret_img = self.coco.getImgIds()
-    cats = self.coco.loadCats(self.coco.getCatIds())
-    nms = [cat['name'] for cat in cats]
-    for _loop, cat in enumerate(nms):
-        catIds = self.coco.getCatIds(catNms=cat)
-        __map_catID[int(catIds[0])] = _loop
-    return __ret_img, __map_catID
-
-
 
 
 def func_all(coco):
@@ -183,6 +180,7 @@ def func_all(coco):
     cats = coco.loadCats(coco.getCatIds())
     nms = [cat['name'] for cat in cats]
     for _loop, cat in enumerate(nms):
+        #print(cat)
         catIds = coco.getCatIds(catNms=cat)
         __map_catID[int(catIds[0])] = _loop
     return __ret_img, __map_catID
@@ -210,6 +208,7 @@ def func_custom1(coco):
     nms = [cat['name'] for cat in cats]
     #print("nms", nms, len(nms))
     for _loop, cat in enumerate(nms):
+        #print(cat)
         catIds = coco.getCatIds(catNms=cat)
         imgIds = coco.getImgIds(catIds=catIds)
         __map_catID[int(catIds[0])] = _loop
@@ -387,7 +386,7 @@ def check_bbox(cfg, coco, compose=None):
     import pylab as pl
 
     data = coco(cfg, 'check', compose)
-    data.form = "x1y1whc"
+    #data.form = "x1y1whc"
 
     path = "./dataset/temp/"
     operator.remove_files(path)
@@ -609,7 +608,9 @@ if __name__ == '__main__':
         cfg.FORM = "xyc"
         check_keypoints(cfg, coco, None)
     elif sys.argv[1] == "bbox":
-        cfg.FORM = "icxywh_normalized"
+        #cfg.FORM = "icxywh_normalized"
+        cfg.FORM = "xywhc"
+        
         check_bbox(cfg, coco, compose)
         
     #check_licence(cfg, coco, compose)
