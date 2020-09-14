@@ -8,8 +8,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from dataset import data_loader
 import time
 
-class coco_base(data_loader.base_augmentation):
-#class coco_base(data_loader.base_augmentation0):
+#class coco_base(data_loader.base_augmentation):
+class coco_base(data_loader.base_augmentation0):
 
     def __init__(self, cfg, data='train', transformer = None, name="2017"):
         super(coco_base, self).__init__(cfg, transformer)

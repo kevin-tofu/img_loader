@@ -2,7 +2,7 @@ import albumentations as A
 from albumentations import Compose
 from albumentations.augmentations.transforms import Resize, HorizontalFlip, RandomSizedCrop, HueSaturationValue
 from albumentations.augmentations.transforms import RandomGamma, Blur, RGBShift, GaussNoise, ChannelShuffle
-from albumentations.augmentations.transforms import Normalize, ShiftScaleRotate
+from albumentations.augmentations.transforms import Normalize, ShiftScaleRotate,ChannelShuffle
 
 # Resize image to (image_height, image_width) with 100% probability
 # Flip LR with 50% probability
@@ -22,11 +22,18 @@ def get_compose_resize(image_height, image_width, format):
                     bbox_params={'format':format, 'label_fields':['category_id']})
 
 
-def get_compose_resize2(image_height, image_width, format):
+def get_compose_resize2(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
 
     return Compose([Resize(image_height, image_width, p=1.0),\
                     HorizontalFlip(p=0.5),\
-                    Blur(p=0.1), \
+                    RandomSizedCrop(crop_min_max, image_height, image_width, p=0.2),\
+                    Blur(p=0.05), \
+                    GaussNoise(p=0.20), \
+                    RandomGamma(p=0.1), \
+                    RGBShift(p=0.1), \
+                    ChannelShuffle(p=0.1),\
+                    HueSaturationValue(hue_shift, saturation_shift, value_shift, p=0.1),\
+                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=10, p=0.5), \
                     Normalize(always_apply=True)], \
                     bbox_params={'format':format, 'label_fields':['category_id']})
 
