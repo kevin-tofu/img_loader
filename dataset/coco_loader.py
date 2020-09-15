@@ -401,6 +401,7 @@ def check_bbox(cfg, coco, compose=None):
         for ii, (c, t) in enumerate(zip(img, target)):
 
             fname = path + str(i*32 + ii) + ".jpg"
+            print(fname)
             c_box = draw_box(c, t, data.form)
             pl.clf()
             pl.imshow(c_box)

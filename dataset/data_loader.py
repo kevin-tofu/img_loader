@@ -312,6 +312,7 @@ class base_augmentation0(base):
         for i, l in enumerate(labels):
             labels[i] = np.array(l)
             labels[i][:, 2:4] = np.clip(labels[i][:, 2:4], 0.1, 416 - 0.1) 
+            #print(labels[i])
             x1y1wh_trans.append(labels[i][0:4])
             id_trans.append(labels[i][4:])
 
@@ -323,6 +324,7 @@ class base_augmentation0(base):
         # !!! caution : TODO
         for i, l in enumerate(labels):
             labels[i] = np.array(l)
+            #print(labels[i])
             labels[i][:, 2:4] = np.clip(labels[i][:, 2:4], 0.1, 416 - 0.1) 
 
         augmented = [self.transformer(image = img, bboxes=label[:, 0:4], category_id= label[:, 4]) for img, label in zip(images, labels)]
@@ -405,9 +407,19 @@ class base_augmentation0(base):
             pass
         else:
             if self.form == "x1y1whc":
-                pass
+                ret = [np.concatenate([_x1y1wh, _id], axis = 1) for _x1y1wh, _id in zip(x1y1wh_trans, id_trans)]
+
             elif self.form == "xywhc":
-                ret = [np.concatenate([_xywh, _id], axis = 1) for _xywh, _id in zip(x1y1wh_trans, id_trans)]
+                def x1y1wh_to_xywh(label):
+                    ret = np.copy(label)
+                    ret[:, 0:2] += label[:, 2:4] / 2.
+                    return ret
+
+                #print(x1y1wh_trans)
+                #print("CONVERTED")
+                ret = [np.concatenate([x1y1wh_to_xywh(_x1y1wh), _id], axis = 1) for _x1y1wh, _id in zip(x1y1wh_trans, id_trans)]
+                #print(ret)
+
 
             elif self.form == "xywhc_normalized":
                 pass
