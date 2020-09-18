@@ -71,7 +71,7 @@ class base(object):
                 raise ValueError("choose from " + cmt)
 
         elif self.anntype == "keypoints":
-            if v in __keys_keypoints:
+            if v in self.__keys_keypoints:
                 self.__form = v
             else:
                 cmt = ""
@@ -275,6 +275,15 @@ class base_augmentation(base):
         return ret_images, ret_targets
         
 
+def x1y1wh_to_xywh(label):
+    ret = np.copy(label)
+    ret[:, 0:2] += label[:, 2:4] / 2.
+    return ret
+def x1y1wh_to_xywhc_normalized(label, img):
+    ret = np.copy(label) / img.shape[0]
+    ret[:, 0:2] += label[:, 2:4] / 2.
+    return ret
+
 class base_augmentation0(base):
     """
     The class that is image loader with doing data augmentation using albumentation.
@@ -324,27 +333,28 @@ class base_augmentation0(base):
         # !!! caution : TODO
         for i, l in enumerate(labels):
             labels[i] = np.array(l)
-            #print(labels[i])
-            labels[i][:, 2:4] = np.clip(labels[i][:, 2:4], 0.1, 416 - 0.1) 
+            labels[i][:, 2:4] = np.clip(labels[i][:, 2:4], 0.1, 416 - 0.1)
+            #x1y1wh_to_xywh()
 
         augmented = [self.transformer(image = img, bboxes=label[:, 0:4], category_id= label[:, 4]) for img, label in zip(images, labels)]
+        
+
         #img_trans = augmented['image']
-        img_trans = [a["image"] for a in augmented]
-        #img_trans = np.concatenate([a["images"] for a in augmented], axis=3)
+        img_trans = [a["image"] for a in augmented if len(a["bboxes"]) > 0]
+        x1y1wh_trans = [np.clip(a["bboxes"], 0, 415.9)  for a in augmented if len(a["bboxes"]) > 0]
+        id_trans = [np.array(a['category_id'])[:, np.newaxis]  for a in augmented if len(a["bboxes"]) > 0]
 
-        x1y1wh_trans = [np.clip(a["bboxes"], 0, 415.9)  for a in augmented]
-        id_trans = [np.array(a['category_id'])[:, np.newaxis]  for a in augmented]
-
-        no_annotated = []
-        for i, a in enumerate(augmented):
-            if len(a["bboxes"]) == 0:
-                no_annotated.append(i)
-        if len(no_annotated) > 0:
-            print("no_annotated", len(no_annotated))
-            dellist = lambda items, indexes: [item for index, item in enumerate(items) if index not in indexes]
-            img_trans = dellist(img_trans, no_annotated)
-            x1y1wh_trans = dellist(x1y1wh_trans, no_annotated)
-            id_trans = dellist(id_trans, no_annotated)
+        
+        #no_bbox = []
+        #for i, a in enumerate(augmented):
+        #    if len(a["bboxes"]) == 0:
+        #        no_bbox.append(i)
+        #if len(no_bbox) > 0:
+        #    print("no_bbox", len(no_bbox))
+        #    dellist = lambda items, indexes: [item for index, item in enumerate(items) if index not in indexes]
+        #    img_trans = dellist(img_trans, no_bbox)
+        #    x1y1wh_trans = dellist(x1y1wh_trans, no_bbox)
+        #    id_trans = dellist(id_trans, no_bbox)
 
         return (img_trans, x1y1wh_trans, id_trans)
 
@@ -399,7 +409,7 @@ class base_augmentation0(base):
                 
         return (img_trans, key_trans, np.concatenate((class_trans, person_trans), 1))
 
-    def format_bbox(self, x1y1wh_trans, id_trans):
+    def format_bbox(self, x1y1wh_trans, id_trans, images):
 
         if self.form == "icxywh_normalized":
             pass
@@ -410,19 +420,11 @@ class base_augmentation0(base):
                 ret = [np.concatenate([_x1y1wh, _id], axis = 1) for _x1y1wh, _id in zip(x1y1wh_trans, id_trans)]
 
             elif self.form == "xywhc":
-                def x1y1wh_to_xywh(label):
-                    ret = np.copy(label)
-                    ret[:, 0:2] += label[:, 2:4] / 2.
-                    return ret
-
-                #print(x1y1wh_trans)
-                #print("CONVERTED")
+                #ret = [np.concatenate([_x1y1wh, _id], axis = 1) for _x1y1wh, _id in zip(x1y1wh_trans, id_trans)]
                 ret = [np.concatenate([x1y1wh_to_xywh(_x1y1wh), _id], axis = 1) for _x1y1wh, _id in zip(x1y1wh_trans, id_trans)]
-                #print(ret)
-
 
             elif self.form == "xywhc_normalized":
-                pass
+                ret = [np.concatenate([x1y1wh_to_xywhc_normalized(_x1y1wh, img), _id], axis = 1) for _x1y1wh, _id, img in zip(x1y1wh_trans, id_trans, images)]
         
         return ret
 
@@ -442,7 +444,7 @@ class base_augmentation0(base):
             # Do augmentation by albumentations
             img_trans, x1y1wh_trans, id_trans = self.augmentation_albumentations(images, targets)
 
-        ret_targets = self.format(x1y1wh_trans, id_trans)
+        ret_targets = self.format(x1y1wh_trans, id_trans, img_trans)
 
         return img_trans, ret_targets
         

@@ -337,6 +337,9 @@ def draw_box(img, target, fmt="xywhc"):
     
     #rr, cc = [], []
     ret = np.copy(img)
+    if len(target) == 0:
+        return ret
+
     for t in target:
         if fmt == "x1y1whc":
             x1 = int(t[0])
@@ -369,7 +372,7 @@ def draw_box(img, target, fmt="xywhc"):
 
         #rr, cc = rectangle(start = (y1, x1), end = (y2 - 1, x2 - 1))
         rr, cc = rectangle_perimeter(start = (y1, x1), end = (y2 - 2, x2 - 2))
-
+        
         ret[rr, cc] = color_line
         #ret[rr, cc, 0] = 255
 
@@ -560,7 +563,9 @@ if __name__ == '__main__':
     #np.random.seed(1234)
     np.random.seed(9999)
     from easydict import EasyDict as edict
-    from dataset.augmentator import get_compose, get_compose_keypoints
+    from dataset.augmentator import get_compose_resize, get_compose, get_compose_resize2, get_compose_resize4
+    from dataset.augmentator import get_compose_keypoints
+    get_compose_resize2
 
     cfg = edict()
     #if True:
@@ -592,11 +597,17 @@ if __name__ == '__main__':
     #fmt = "pascal_voc"
     fmt = "coco"
 
-    compose = get_compose(crop_min_max, image_size, image_size, 
-                          hue_shift, saturation_shift, value_shift, fmt)
+    
     compose_keypoints = get_compose_keypoints(crop_min_max, image_size, image_size, 
                                     hue_shift, saturation_shift, value_shift, fmt)
+
+    #compose = get_compose_resize( image_size, image_size, fmt)
+    #compose = get_compose_resize2(crop_min_max, image_size, image_size, 
+    #                              hue_shift, saturation_shift, value_shift, fmt)
+    compose = get_compose_resize4(crop_min_max, image_size, image_size, 
+                                  hue_shift, saturation_shift, value_shift, fmt)
     #compose = None
+
 
     print(sys.argv[1])
     if len(sys.argv) > 2:

@@ -44,17 +44,24 @@ def get_compose_resize3(crop_min_max, image_height, image_width, format):
                     RandomSizedCrop(crop_min_max, image_height, image_width, p=0.2),\
                     Blur(p=0.05), \
                     GaussNoise(p=0.25), \
-                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=10, p=0.5), \
+                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=15, p=0.5), \
                     Normalize(always_apply=True)], \
                     bbox_params={'format':format, 'label_fields':['category_id']})
 
-def get_compose_resize4(crop_min_max, image_height, image_width, format):
+def get_compose_resize4(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
 
     return Compose([Resize(image_height, image_width, p=1.0),\
                     HorizontalFlip(p=0.5),\
-                    RandomSizedCrop(crop_min_max, image_height, image_width, p=0.2),\
-                    Blur(p=0.1), \
-                    GaussNoise(p=0.25), ], \
+                    RandomSizedCrop(crop_min_max, image_height, image_width, p=0.7),\
+                    Blur(p=0.2), \
+                    GaussNoise(p=0.7), \
+                    RandomGamma(gamma_limit = (95, 105) , p=0.6), \
+                    RGBShift(r_shift_limit=5, g_shift_limit=5, b_shift_limit=5, p=0.6), \
+                    ChannelShuffle(p=0.4),\
+                    HueSaturationValue(hue_shift, saturation_shift, value_shift, p=0.1),\
+                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=20, p=0.9), \
+                    Normalize(always_apply=True)\
+                    ], \
                     bbox_params={'format':format, 'label_fields':['category_id']})
 
 
