@@ -74,7 +74,8 @@ class coco_base(data_loader.base_augmentation0):
         return (img_list, target_list)
 
     def __len__(self):#length of mini-batches
-        return self.num_data // self.batchsize
+        #return self.num_data // self.batchsize
+        return self.num_data
 
     def categories(self):
         nms = [str(i+1) for i in range(self.n_class)]
@@ -87,23 +88,23 @@ class coco_base(data_loader.base_augmentation0):
 
     def get_bbox(self, ann):
 
-        #print(self.map_catID, int(ann['category_id']), len(self.map_catID))
-        included = int(ann['category_id']) in self.map_catID.keys()
-        #print(included, int(ann['category_id']))
-        if len(ann['bbox']) == 0:
-            print("NO BOX")
-            ret = None
-        elif included == False:
-            ret = None
-        else:
-            x1 = float(ann['bbox'][0])
-            y1 = float(ann['bbox'][1])
-            w = float(ann['bbox'][2])
-            h = float(ann['bbox'][3])
-            id_cat = self.map_catID[int(ann['category_id'])]
-            #id_cat = int(ann['category_id'])
-            ret = [x1, y1, w, h, id_cat]
-        
+        #included = int(ann['category_id']) in self.map_catID.keys()
+        #if len(ann['bbox']) == 0:
+            #print("NO BOX")
+            #ret = [None, None, None, None, None]
+        #    ret = None
+        #elif included == False:
+            #print("not included")
+            #ret = [None, None, None, None, None]
+        #    ret = None
+        #else:
+            
+        x1 = float(ann['bbox'][0])
+        y1 = float(ann['bbox'][1])
+        w = float(ann['bbox'][2])
+        h = float(ann['bbox'][3])
+        id_cat = self.map_catID[int(ann['category_id'])]
+        ret = [x1, y1, w, h, id_cat]
         return ret
 
     def get_keypoints(self, ann):
@@ -153,6 +154,7 @@ class coco_base(data_loader.base_augmentation0):
             for ann in anns:
                 #print(ann)
                 ret = self.get_annotation(ann)
+                #ret = self.get_bbox(ann)
                 #print(ret)
                 if ret is None:
                     continue
@@ -410,20 +412,6 @@ def check_bbox(cfg, coco, compose=None):
             pl.imshow(c_box)
             pl.savefig(fname)
 
-def check_loader(cfg, coco, compose=None):
-
-    print("Check coco dataloader")
-
-    data_ = coco(cfg, 'val', compose)
-    data_.initialize_loader()
-    #data_.form = "icxywh_normalized"
-    #print(data_train.coco.anns.keys())
-
-    for batch_idx, (img, target) in enumerate(data_):
-        print(np.array(img).shape, np.array(target).shape)
-        #print(target)
-        d = batch_idx/len(data_) * 100
-        print('[{} / {}({:.1f}%)]'.format(batch_idx, len(data_), d))
 
 def check_keypoints(cfg, coco, compose):
 
@@ -557,6 +545,251 @@ def check_cocoapi(cfg, coco, compose, year):
         print(ann)
 
 
+from torch.utils.data import DataLoader, Dataset
+
+class coco_base_(Dataset, data_loader.base):
+    def __init__(self, cfg, data='train', transformer = None, name="2017"):
+        
+        self.anntype = cfg.ANNTYPE
+        self.__data = data
+        self.data_dir = cfg.PATH
+        self.n_class = cfg.NUM_CLASSES
+        self.transformer = transformer
+        self.pycocoloader(cfg, data, name)
+
+        data_loader.base.__init__(self, cfg)
+        Dataset.__init__(self)
+
+        if self.anntype == 'bbox':
+            self.get_annotation = self.get_bbox
+        elif self.anntype == 'keypoints':
+            self.get_annotation = self.get_keypoints
+
+    def initialize_loader(self):
+        self.get_ids_image()
+    
+    def set_ids_function(self, key4func, func):
+        self.ids_funcs[key4func] = func
+
+    def get_prefix(self, v):
+        __prefix = 'instances'
+        if v == "bbox":
+            __prefix = 'instances'
+        elif v == "keypoints":
+            __prefix = 'person_keypoints'
+        elif v == "captions":
+            __prefix = 'captions'
+        else:
+            raise ValueError("choose from [bbox, keypoints, captions]")
+        return __prefix
+
+    def get_dataName(self, data, name):
+        if data == 'check':
+            return 'val' + name
+        else:
+            return data + name
+
+    def pycocoloader(self, cfg, data, name):
+        
+        prefix = self.get_prefix(cfg.ANNTYPE)
+        dataName = self.get_dataName(data, name) # train2014
+        self.img_dir = self.data_dir + '/images/' + dataName + '/'
+        annfname = '%sannotations/%s_%s.json'%(self.data_dir, prefix, dataName)
+        print(annfname)
+        self.coco = COCO(annfname)
+        self.ids_img = []
+        self.map_catID = {}
+
+
+    def get_ids_image(self):
+        raise NotImplementedError()
+
+    def categories(self):
+        nms = [str(i+1) for i in range(self.n_class)]
+        return nms
+
+    def __len__(self):#length of mini-batches
+        return self.num_data
+
+    @property
+    def num_data(self):
+        return len(self.ids_img)
+    
+
+    def get_bbox(self, ann):
+
+        #included = int(ann['category_id']) in self.map_catID.keys()
+        #if len(ann['bbox']) == 0:
+            #print("NO BOX")
+            #ret = [None, None, None, None, None]
+        #    ret = None
+        #elif included == False:
+            #print("not included")
+            #ret = [None, None, None, None, None]
+        #    ret = None
+        #else:
+            
+        x1 = float(ann['bbox'][0])
+        y1 = float(ann['bbox'][1])
+        w = float(ann['bbox'][2])
+        h = float(ann['bbox'][3])
+        id_cat = self.map_catID[int(ann['category_id'])]
+        ret = [x1, y1, w, h, id_cat]
+        return ret
+
+    def get_keypoints(self, ann):
+
+        if ann['num_keypoints'] == 0:
+            #print("NO keypoints")
+            #print(ann)
+            return None
+        #ann['keypoints'].__len__ (21) -> joints.shape(7, 3)
+        joints = np.array(ann['keypoints']).reshape((-1, 3))
+        #print(ann['keypoints'], joints.shape)
+        return joints
+
+    def __getitem__(self, i):
+
+        #print(i)
+        img_id = self.ids_img[i]
+        img_name = self.coco.imgs[img_id]['file_name']
+        img_path = self.img_dir + img_name
+        if os.path.exists(img_path) == False:
+            #print("no file")
+            return {"image":None, "bboxes":[], "category_id":[]}
+        else:
+            img = io.imread(img_path)
+            if img.ndim == 2:
+                img = np.expand_dims(img, 2)
+                img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3))
+
+        #target
+        #print(img_id, img_name)
+        ann_ids = self.coco.getAnnIds(imgIds=img_id)
+        anns = self.coco.loadAnns(ann_ids)
+
+        labels = []
+        if len(anns) == 0:
+            #print("zero annotations")
+            return {"image":img, "bboxes":[], "category_id":[]}
+        else:
+            labels = [self.get_bbox(a) for a in anns if (len(a['bbox']) > 0) and (int(a['category_id']) in self.map_catID.keys())]
+
+        if len(labels) > 0:
+            labels = np.array(labels)
+            labels[:, 2:4] = np.clip(labels[:, 2:4], 0.1, 416 - 0.1)
+            augmented = self.transformer(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
+        else:
+            #print("no labels")
+            return {"image":img, "bboxes":[], "category_id":[]}
+
+        return augmented
+
+    def collate_fn(self, batch):
+
+        images = [b["image"] for b in batch if len(b["bboxes"]) > 0]
+        x1y1wh_trans = [b["bboxes"] for b in batch if len(b["bboxes"]) > 0]
+        id_trans = [b["category_id"] for b in batch if len(b["bboxes"]) > 0]
+        targets = [np.concatenate([x1y1wh_to_xywh(_x1y1wh), np.array(_id)[:, np.newaxis]], axis = 1) for _x1y1wh, _id in zip(x1y1wh_trans, id_trans)]
+        return images, targets
+
+class coco_base_specific_(coco_base_):
+
+    def __init__(self, cfg, data='train', transformer = None, name="2017"):
+        super(coco_base_specific_, self).__init__(cfg, data, transformer, name=name)
+        self.ids_funcs = {}
+        self.set_ids_function("all", func_all)
+        self.set_ids_function("commercial", func_commercial)
+        self.set_ids_function("custom1", func_custom1)
+        self.set_ids_function("vehicle", func_vehicle)
+        self.ids_image_form = cfg.IDS #'all', ''
+        self.initialize_loader()
+
+    @property
+    def ids_image_form(self):
+        return self.__ids_image_form
+
+    @ids_image_form.setter
+    def ids_image_form(self, v):
+        print(v)
+        print(self.ids_funcs.keys())
+        if v in self.ids_funcs.keys():
+            self.__ids_image_form = v
+        else:
+            self.__ids_image_form = "commercial"
+            cmt = ""
+            for loop in self.ids_funcs.keys():
+                cmt += loop + ", "
+            raise ValueError("choose from " + cmt)
+
+    def get_ids_image(self):
+
+        key = self.ids_image_form
+        if key in self.ids_funcs.keys():
+            self.ids_img, self.map_catID = self.ids_funcs[key](self.coco)
+        else:
+            raise ValueError("set ids_image_form correctly")
+
+
+class coco2017_(coco_base_specific_):
+    name = 'coco2017'
+    use = 'localization'
+    def __init__(self, cfg, data='train', transformer=None):
+        self.year = "2017"
+        super(coco2017_, self).__init__(cfg, data, transformer, name="2017")
+
+class coco2014_(coco_base_specific_):
+    name = 'coco2014'
+    use = 'localization'
+    def __init__(self, cfg, data='train', transformer=None):
+        self.year = "2014"
+        super(coco2017_, self).__init__(cfg, data, transformer, name="2014")
+
+
+def x1y1wh_to_xywh(label):
+    ret = np.copy(label)
+    ret[:, 0:2] += ret[:, 2:4] / 2.
+    return ret
+
+#def collate_fn(batch):
+
+#    images = [b["image"] for b in batch if len(b["bboxes"]) > 0]
+#    x1y1wh_trans = [b["bboxes"] for b in batch if len(b["bboxes"]) > 0]
+#    id_trans = [b["category_id"] for b in batch if len(b["bboxes"]) > 0]
+#    targets = [np.concatenate([x1y1wh_to_xywh(_x1y1wh), np.array(_id)[:, np.newaxis]], axis = 1) for _x1y1wh, _id in zip(x1y1wh_trans, id_trans)]
+#    return images, targets
+
+
+def check_loader(cfg, coco, compose=None):
+
+    print("Check coco dataloader")
+
+    #loader = coco(cfg, 'val', compose)
+    data_ = coco2017_(cfg, 'val', compose)
+    data_.initialize_loader()
+    
+    #loader = DataLoader(data_, batch_size=cfg.BATCHSIZE, shuffle=False, sampler=None,
+    #                    batch_sampler=None, num_workers=12, collate_fn=collate_fn,
+    #                    pin_memory=False, drop_last=False, timeout=0,
+    #                    worker_init_fn=None)
+    loader = DataLoader(data_, batch_size=cfg.BATCHSIZE,
+                        shuffle=True, num_workers=12, collate_fn=data_.collate_fn)
+    #loader = DataLoader(data_, batch_size=cfg.BATCHSIZE, num_workers=12, collate_fn=collate_fn)
+
+    s = 0
+    for batch_idx, (img, target) in enumerate(loader):
+    #for batch_idx, data in enumerate(loader):
+
+        print ("load and agument:{0}".format(time.time() - s) + "[sec]")
+
+        print(np.array(img).shape, np.array(target).shape)
+        #print(target)
+        d = (batch_idx+1)/len(loader) * 100
+        print('[{} / {}({:.1f}%)]'.format(batch_idx+1, len(loader), d))
+        
+        s = time.time()
+
+
 if __name__ == '__main__':
 
     print("start")
@@ -614,8 +847,10 @@ if __name__ == '__main__':
         cfg.PATH = sys.argv[2]
 
     if sys.argv[1] == "loader":
-        cfg.FORM = "icxywh_normalized"
+        #cfg.FORM = "icxywh_normalized"
+        cfg.FORM = "xywhc"
         check_loader(cfg, coco, compose)
+
     elif sys.argv[1] == "keypoints":
         cfg.FORM = "xyc"
         check_keypoints(cfg, coco, None)
@@ -624,6 +859,9 @@ if __name__ == '__main__':
         cfg.FORM = "xywhc"
         
         check_bbox(cfg, coco, compose)
+
+    elif sys.argv[1] == "test":
+        pass
         
     #check_licence(cfg, coco, compose)
     #check_annotations(cfg, coco, compose, year)
@@ -632,7 +870,5 @@ if __name__ == '__main__':
 
     print("end")
 
-
-
-
+#https://gist.github.com/Lexie88rus/b1f3a45f3e0e19c59c1795d7509d42a4
 
