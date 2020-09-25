@@ -184,7 +184,7 @@ def func_all(coco):
     for _loop, cat in enumerate(nms):
         #print(cat)
         catIds = coco.getCatIds(catNms=cat)
-        __map_catID[int(catIds[0])] = _loop
+        __map_catID[int(catIds[-1])] = _loop
     return __ret_img, __map_catID
     
 def func_commercial(coco):
@@ -194,7 +194,7 @@ def func_commercial(coco):
     nms = [cat['name'] for cat in cats]
     for _loop, cat in enumerate(nms):
         catIds = coco.getCatIds(catNms=cat)
-        __map_catID[int(catIds[0])] = _loop
+        __map_catID[int(catIds[-1])] = _loop
     for _id in coco.getImgIds():
         id_license = coco.imgs[_id]['license']
         if id_license >= 4:
@@ -213,7 +213,7 @@ def func_custom1(coco):
         #print(cat)
         catIds = coco.getCatIds(catNms=cat)
         imgIds = coco.getImgIds(catIds=catIds)
-        __map_catID[int(catIds[0])] = _loop
+        __map_catID[int(catIds[-1])] = _loop
         #print(_loop, catIds[0])
         #print(cat, len(imgIds))
         if len(imgIds) != 0:
@@ -223,16 +223,15 @@ def func_custom1(coco):
         __ret_img += np.array(imgIds)[idx].tolist()
     return __ret_img, __map_catID
 
-
 def func_vehicle(coco):
     __ret_img = []
     __map_catID = {}
-    cats = coco.loadCats(coco.getCatIds())
+    #cats = coco.loadCats(coco.getCatIds())
     nms = ["truck", "car", "bus"]
     for _loop, cat in enumerate(nms):
         catIds = coco.getCatIds(catNms=cat)
         imgIds = coco.getImgIds(catIds=catIds)
-        __map_catID[int(catIds[0])] = _loop
+        __map_catID[int(catIds[-1])] = _loop
         __ret_img += imgIds
     return __ret_img, __map_catID
 
@@ -520,18 +519,23 @@ def check_cocoapi(cfg, coco, compose, year):
     cc = COCO(fname)
     cats = cc.loadCats(cc.getCatIds())
     nms=[cat['name'] for cat in cats]
+    cat_id = [cat['id'] for cat in cats]
+    sucat = [cat['supercategory'] for cat in cats]
     print('COCO categories: \n{}\n'.format(' '.join(nms)))
     print(len(nms))
+    print("nms", nms, len(nms))
+    print(cc.getCatIds())
+    print(cats[0].keys())
+    print("cat_id", cat_id, len(cat_id))
+    print("sucat", sucat, len(sucat))
 
     #nms = set([cat['supercategory'] for cat in cats])
     #print('COCO supercategories: \n{}'.format(' '.join(nms)))
 
     catIds_1 = cc.getCatIds(catNms=['person','dog','skateboard'])
     imgIds_1 = cc.getImgIds(catIds=catIds_1)
-
     catIds_2 = cc.getCatIds(catNms=nms[30])
     imgIds_2 = cc.getImgIds(catIds=catIds_2)
-
     imgIds_3 = cc.getImgIds()
 
     print(len(imgIds_1), "imgIds_1")
@@ -543,6 +547,28 @@ def check_cocoapi(cfg, coco, compose, year):
     annIds_2 = cc.getAnnIds(imgIds_2[0])
     for ann in cc.loadAnns(annIds_2):
         print(ann)
+
+    for i, cat in enumerate(cats):
+        print("-------", i, "-------", cat["name"])
+        
+
+        catIds = cc.getCatIds(catNms=cat["name"])
+        imgIds = cc.getImgIds(catIds=catIds)
+
+        print("catIds", catIds, catIds[-1], i)
+        print("len(imgIds)", len(imgIds))
+
+        #__map_catID[int(catIds[0])] = _loop
+        #id_cat = self.map_catID[int(ann['category_id'])]
+        #ret = [x1, y1, w, h, id_cat]
+
+        
+        
+
+        #ann_ids = cc.getAnnIds(imgIds=imgIds[0])
+        #anns = cc.loadAnns(ann_ids)
+        #print(len(anns))
+        #print((np.array(anns["bbox"])[:, 4] == i).shape)
 
 
 from torch.utils.data import DataLoader, Dataset
@@ -605,7 +631,8 @@ class coco_base_(Dataset, data_loader.base):
         raise NotImplementedError()
 
     def categories(self):
-        nms = [str(i+1) for i in range(self.n_class)]
+        cats = self.coco.loadCats(self.coco.getCatIds())
+        nms=[cat['name'] for cat in cats]
         return nms
 
     def __len__(self):#length of mini-batches
@@ -663,8 +690,6 @@ class coco_base_(Dataset, data_loader.base):
                 img = np.expand_dims(img, 2)
                 img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3))
 
-        #target
-        #print(img_id, img_name)
         ann_ids = self.coco.getAnnIds(imgIds=img_id)
         anns = self.coco.loadAnns(ann_ids)
 
@@ -743,7 +768,7 @@ class coco2014_(coco_base_specific_):
     use = 'localization'
     def __init__(self, cfg, data='train', transformer=None):
         self.year = "2014"
-        super(coco2017_, self).__init__(cfg, data, transformer, name="2014")
+        super(coco2014_, self).__init__(cfg, data, transformer, name="2014")
 
 
 def x1y1wh_to_xywh(label):
@@ -761,35 +786,71 @@ def x1y1wh_to_xywh(label):
 
 
 def check_loader(cfg, coco, compose=None):
-
+    
     print("Check coco dataloader")
+    data_type = 'train'
+    #data_type = 'val'
 
     #loader = coco(cfg, 'val', compose)
-    data_ = coco2017_(cfg, 'val', compose)
+    data_ = coco2017_(cfg, data_type, compose)
     data_.initialize_loader()
     
     #loader = DataLoader(data_, batch_size=cfg.BATCHSIZE, shuffle=False, sampler=None,
     #                    batch_sampler=None, num_workers=12, collate_fn=collate_fn,
     #                    pin_memory=False, drop_last=False, timeout=0,
     #                    worker_init_fn=None)
+    #loader = DataLoader(data_, batch_size=cfg.BATCHSIZE,
+    #                    shuffle=True, num_workers=12, collate_fn=data_.collate_fn)
     loader = DataLoader(data_, batch_size=cfg.BATCHSIZE,
-                        shuffle=True, num_workers=12, collate_fn=data_.collate_fn)
+                        shuffle=False, num_workers=2, collate_fn=data_.collate_fn)
     #loader = DataLoader(data_, batch_size=cfg.BATCHSIZE, num_workers=12, collate_fn=collate_fn)
 
     s = 0
-    for batch_idx, (img, target) in enumerate(loader):
+    object_num = np.zeros(80)
+    for batch_idx, (imgs, targets_list) in enumerate(loader):
     #for batch_idx, data in enumerate(loader):
 
         print ("load and agument:{0}".format(time.time() - s) + "[sec]")
-
-        print(np.array(img).shape, np.array(target).shape)
+        #print(np.array(img).shape, np.array(target).shape)
+        for targets in targets_list:
+            for t in targets:
+                object_num[int(t[4])] += 1
         #print(target)
         d = (batch_idx+1)/len(loader) * 100
         print('[{} / {}({:.1f}%)]'.format(batch_idx+1, len(loader), d))
         
         s = time.time()
 
+    path = "img_loader/dataset/"
+    plot_num_dataset(path, data_type, [object_num], [data_type])
+    np.save(path + "data_"  + data_type  + ".npy", object_num)
 
+def plot_num_dataset(path, data_type, object_num, content):
+    
+    from utils import operator
+    import matplotlib as mpl
+    mpl.use('Agg')
+    import pylab as plt
+
+    print(object_num)
+    plt.figure()
+    #label = ["Apple", "Banana", "Orange", "Grape", "Strawberry"]
+    #labels = data_test.dataset.categories()
+    #plt.bar(range(1, len(object_num)+1),  object_num, tick_label=labels, align="center")
+    #plt.bar(range(1, len(object_num)+1),  object_num,  align="center")
+    for o in object_num:
+        plt.bar(range(1, len(o)+1), o,  align="center")
+        print(np.argwhere(o < 1)) 
+        print(np.sum(o))
+
+    plt.legend(content)
+    plt.grid()
+    plt.yscale('log')
+    plt.ylim([1e0, 4e5])
+    plt.savefig(path + "data_"  + data_type  + ".png")
+    # 2, 16, 21
+    # 2, 16, 21
+    
 if __name__ == '__main__':
 
     print("start")
@@ -814,7 +875,8 @@ if __name__ == '__main__':
     cfg.ANNTYPE = 'bbox'
     cfg.IDS = 'all'
     cfg.BATCHSIZE = 30
-    cfg.NUM_CLASSES = 91
+    #cfg.NUM_CLASSES = 91
+    cfg.NUM_CLASSES = 80
     
     # Image size for YOLO
     image_size = 416
@@ -861,11 +923,19 @@ if __name__ == '__main__':
         check_bbox(cfg, coco, compose)
 
     elif sys.argv[1] == "test":
-        pass
-        
+        path = "img_loader/dataset/"
+        #data_type = "train"
+        #data_type = "val"
+        data_type = "train_val"
+        object_num_train = np.load(path + "data_train.npy")
+        object_num_val = np.load(path + "data_val.npy")
+        plot_num_dataset(path, data_type, [object_num_train, object_num_val], ["train", "val"])
+
+    elif sys.argv[1] == "cocoapi":
+         check_cocoapi(cfg, coco, compose, year)
     #check_licence(cfg, coco, compose)
     #check_annotations(cfg, coco, compose, year)
-    #check_cocoapi(cfg, coco, compose, year)
+   
 
 
     print("end")
