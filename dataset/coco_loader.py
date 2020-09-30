@@ -361,8 +361,8 @@ def draw_box(img, target, fmt="xywhc"):
             h = int(t[3] * (img.shape[0] - 1))
             x1 = int(t[0] * (img.shape[1] - 1) - w / 2)
             y1 = int(t[1] * (img.shape[0] - 1) - h / 2)
-            x2 = int(t[0] * (img.shape[1] - 1) + w / 2)
-            y2 = int(t[1] * (img.shape[0] - 1) + h / 2)
+            x2 = int(t[0] * (img.shape[1] - 1) + w / 2) - 1
+            y2 = int(t[1] * (img.shape[0] - 1) + h / 2) - 1
 
         x1 = np.clip(x1, 0, ret.shape[1] - 1)
         x2 = np.clip(x2, 0, ret.shape[1] - 1)
@@ -379,37 +379,6 @@ def draw_box(img, target, fmt="xywhc"):
 
     return ret
 
-
-def check_bbox(cfg, coco, compose=None):
-
-    print("Check coco BBox and data augmentations")
-
-    from utils import operator
-    import matplotlib as mpl
-    mpl.use('Agg')
-    import pylab as pl
-
-    data = coco(cfg, 'check', compose)
-    #data.form = "x1y1whc"
-
-    path = "./dataset/temp/"
-    operator.remove_files(path)
-    operator.make_directory(path)
-
-    pl.figure()
-    for i, (img, target) in enumerate(data):
-        #print(img.shape, target.shape)
-        if i > 3:
-            break
-        
-        for ii, (c, t) in enumerate(zip(img, target)):
-
-            fname = path + str(i*32 + ii) + ".jpg"
-            print(fname)
-            c_box = draw_box(c, t, data.form)
-            pl.clf()
-            pl.imshow(c_box)
-            pl.savefig(fname)
 
 
 def check_keypoints(cfg, coco, compose):
@@ -435,7 +404,6 @@ def check_keypoints(cfg, coco, compose):
     operator.remove_files(path)
     operator.make_directory(path)
     cfg.ANNTYPE = 'keypoints'
-    #for dtype in ["train", "val"]:
     for dtype in ["train"]:
         _data = coco(cfg, dtype, compose)
         #_data = coco(cfg, dtype, None)
@@ -561,10 +529,6 @@ def check_cocoapi(cfg, coco, compose, year):
         #__map_catID[int(catIds[0])] = _loop
         #id_cat = self.map_catID[int(ann['category_id'])]
         #ret = [x1, y1, w, h, id_cat]
-
-        
-        
-
         #ann_ids = cc.getAnnIds(imgIds=imgIds[0])
         #anns = cc.loadAnns(ann_ids)
         #print(len(anns))
@@ -788,6 +752,8 @@ def x1y1wh_to_xywh(label):
 def check_loader(cfg, coco, compose=None):
     
     print("Check coco dataloader")
+    cfg.IDS = 'vehicle'
+    #cfg.IDS = 'vehicle'
     data_type = 'train'
     #data_type = 'val'
 
@@ -822,8 +788,51 @@ def check_loader(cfg, coco, compose=None):
         s = time.time()
 
     path = "img_loader/dataset/"
-    plot_num_dataset(path, data_type, [object_num], [data_type])
-    np.save(path + "data_"  + data_type  + ".npy", object_num)
+    data_type_ = data_type + "_" + cfg.IDS
+    plot_num_dataset(path, data_type_, [object_num], [data_type])
+    np.save(path + "data_"  + data_type_  + ".npy", object_num)
+
+
+
+def check_bbox(cfg, coco, compose=None):
+
+    print("Check coco BBox and data augmentations")
+
+    from utils import operator
+    import matplotlib as mpl
+    mpl.use('Agg')
+    import pylab as pl
+
+    data = coco(cfg, 'check', compose)
+    cfg.IDS = 'all'
+    #cfg.IDS = 'vehicle'
+    data_type = 'val'
+
+    data_ = coco2017_(cfg, data_type, compose)
+    data_.initialize_loader()
+    loader = DataLoader(data_, batch_size=cfg.BATCHSIZE,
+                        shuffle=False, num_workers=2, collate_fn=data_.collate_fn)
+    #data.form = "x1y1whc"
+
+    path = "./dataset/temp/"
+    operator.remove_files(path)
+    operator.make_directory(path)
+
+    pl.figure()
+    for i, (img, target) in enumerate(loader):
+        #print(img.shape, target.shape)
+        if i > 3:
+            break
+        
+        for ii, (c, t) in enumerate(zip(img, target)):
+
+            fname = path + str(i*32 + ii) + ".jpg"
+            print(fname)
+            c_box = draw_box(c, t, data.form)
+            pl.clf()
+            pl.imshow(c_box)
+            pl.savefig(fname)
+
 
 def plot_num_dataset(path, data_type, object_num, content):
     
@@ -859,7 +868,7 @@ if __name__ == '__main__':
     from easydict import EasyDict as edict
     from dataset.augmentator import get_compose_resize, get_compose, get_compose_resize2, get_compose_resize4
     from dataset.augmentator import get_compose_keypoints
-    get_compose_resize2
+    from dataset.augmentator import get_compose_resize5
 
     cfg = edict()
     #if True:
@@ -899,7 +908,9 @@ if __name__ == '__main__':
     #compose = get_compose_resize( image_size, image_size, fmt)
     #compose = get_compose_resize2(crop_min_max, image_size, image_size, 
     #                              hue_shift, saturation_shift, value_shift, fmt)
-    compose = get_compose_resize4(crop_min_max, image_size, image_size, 
+    #compose = get_compose_resize4(crop_min_max, image_size, image_size, 
+    #                              hue_shift, saturation_shift, value_shift, fmt)
+    compose = get_compose_resize5(crop_min_max, image_size, image_size, 
                                   hue_shift, saturation_shift, value_shift, fmt)
     #compose = None
 
@@ -924,11 +935,13 @@ if __name__ == '__main__':
 
     elif sys.argv[1] == "test":
         path = "img_loader/dataset/"
+
+        ids = "all"
         #data_type = "train"
         #data_type = "val"
         data_type = "train_val"
-        object_num_train = np.load(path + "data_train.npy")
-        object_num_val = np.load(path + "data_val.npy")
+        object_num_train = np.load(path + "data_train_" + ids + ".npy")
+        object_num_val = np.load(path + "data_val_" + ids + ".npy")
         plot_num_dataset(path, data_type, [object_num_train, object_num_val], ["train", "val"])
 
     elif sys.argv[1] == "cocoapi":
