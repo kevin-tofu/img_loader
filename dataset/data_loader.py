@@ -14,6 +14,30 @@ def chunks2(l, n):
 	for i in l:
 		yield l[i:i + n]
 
+
+def x1y1wh_to_xywh(label):
+    ret = np.copy(label)
+    ret[:, 0:2] += ret[:, 2:4] / 2.
+    return ret
+
+def x1y1wh_to_xywhc_normalized(label, img):
+    ret = np.copy(label) / img.shape[0]
+    ret[:, 0:2] += ret[:, 2:4] / 2.
+    return ret
+
+def collate_fn_bbox(batch):
+    images = [b["image"] for b in batch if len(b["bboxes"]) > 0]
+    x1y1wh_trans = [b["bboxes"] for b in batch if len(b["bboxes"]) > 0]
+    id_trans = [b["category_id"] for b in batch if len(b["bboxes"]) > 0]
+    targets = [np.concatenate([x1y1wh_to_xywh(_x1y1wh), np.array(_id)[:, np.newaxis]], axis = 1) for _x1y1wh, _id in zip(x1y1wh_trans, id_trans)]
+    return images, targets
+
+def collate_fn_keypoints(batch):
+
+    images = [b["image"] for b in batch if len(b["keypoints"]) > 0]
+    targets = [b["keypoints"] for b in batch if len(b["keypoints"]) > 0]
+    return images, targets
+    
 class base(object):
 
     def __init__(self, cfg):
@@ -31,7 +55,6 @@ class base(object):
 
     def initialize_dataset(self):
         raise NotImplementedError()
-    
 
     #
     # Erase in the future
@@ -42,7 +65,6 @@ class base(object):
         temp1 = list(chunks(perm, self.batchsize))
         return temp1
 
-
     def set_keys(self):
         self.__keys_bbox = []
         self.__keys_bbox.append("icxywh_normalized")
@@ -50,7 +72,6 @@ class base(object):
         self.__keys_bbox.append("x1y1whc")
         self.__keys_bbox.append("xywhc")
         self.__keys_bbox.append("xywhc_normalized")
-
         self.__keys_keypoints = []
         self.__keys_keypoints.append("xyc")
 
@@ -89,9 +110,12 @@ class base(object):
 
         if v in ["bbox", "keypoints", "captions"]:
             self.__anntype = v
+            if v == "bbox":
+                self.collate_fn = collate_fn_bbox
+            elif v == "keypoints":
+                self.collate_fn = collate_fn_keypoints
         else:
             raise ValueError("choose from [bbox, keypoints, captions]")
-        
         
 
 class base_augmentation(base):
@@ -265,15 +289,6 @@ class base_augmentation(base):
         return ret_images, ret_targets
         
 
-def x1y1wh_to_xywh(label):
-    ret = np.copy(label)
-    ret[:, 0:2] += label[:, 2:4] / 2.
-    return ret
-
-def x1y1wh_to_xywhc_normalized(label, img):
-    ret = np.copy(label) / img.shape[0]
-    ret[:, 0:2] += label[:, 2:4] / 2.
-    return ret
 
 
 from multiprocessing import Pool
@@ -368,6 +383,7 @@ class base_augmentation0(base):
 
         return (img_trans, x1y1wh_trans, id_trans)
 
+
     def raw_keypoints(self, img, keypoints):
         #print(img.shape)
         if keypoints is list:
@@ -384,6 +400,7 @@ class base_augmentation0(base):
         cp = np.concatenate((_class, _person), 1)
 
         return (img, keypoints_all[:, 0:2], cp)
+
 
     def augmentation_keypoints(self, img, keypoints):
 
@@ -418,6 +435,7 @@ class base_augmentation0(base):
             return None
                 
         return (img_trans, key_trans, np.concatenate((class_trans, person_trans), 1))
+
 
     def format_bbox(self, x1y1wh_trans, id_trans, images):
 

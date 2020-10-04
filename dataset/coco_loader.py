@@ -391,33 +391,38 @@ def check_keypoints(cfg, coco, compose):
     def make_keypoint(img, ann):
         
         ret = np.copy(img)
-        print(ret.shape, ann.shape)
+        #print(ret.shape, ann.shape)
         for a in ann:
-            #print(x, y)
-            x = int(a[0])
-            y = int(a[1])
-            rr, cc = circle(y, x, 5, ret.shape)
-            ret[rr, cc, :] = (255, 0, 0)
+            if a is None:
+                continue
+            for xy in a:
+                x = int(xy[0])
+                y = int(xy[1])
+                rr, cc = circle(y, x, 5, ret.shape)
+                ret[rr, cc, :] = (255, 0, 0)
         return ret
 
     path = "./img_loader/dataset/temp/"
     operator.remove_files(path)
     operator.make_directory(path)
     cfg.ANNTYPE = 'keypoints'
-    for dtype in ["train"]:
-        _data = coco(cfg, dtype, compose)
-        #_data = coco(cfg, dtype, None)
-        for i, (img, anns) in enumerate(_data):
+
+    for dtype in ["val"]:
+        data_ = coco2017_(cfg, dtype, compose)
+        data_.initialize_loader()
+        loader = DataLoader(data_, batch_size=cfg.BATCHSIZE,
+                            shuffle=False, num_workers=2, collate_fn=data_.collate_fn)
+
+        for i, (imgs, anns) in enumerate(loader):
             #print(np.array(anns).shape, np.array(img).shape)
-            for ii, (img_each, ann_each) in enumerate(zip(img, anns)):
+            for ii, (img_each, ann_each) in enumerate(zip(imgs, anns)):
                 fname = path + str(i*32 + ii) + ".jpg"
                 i_ret = make_keypoint(img_each, ann_each)
                 pl.clf()
                 pl.imshow(i_ret)
                 pl.savefig(fname)
-                
             break
-            
+
 
 def check_licence(cfg, coco, compose):
 
@@ -538,7 +543,7 @@ def check_cocoapi(cfg, coco, compose, year):
 from torch.utils.data import DataLoader, Dataset
 
 class coco_base_(Dataset, data_loader.base):
-    def __init__(self, cfg, data='train', transformer = None, name="2017"):
+    def __init__(self, cfg, data='train', transformer=None, name="2017"):
         
         self.anntype = cfg.ANNTYPE
         self.__data = data
@@ -551,7 +556,7 @@ class coco_base_(Dataset, data_loader.base):
         Dataset.__init__(self)
 
         if self.anntype == 'bbox':
-            self.get_annotation = self.get_bbox
+            self.get_annotation = self.get_bboxes
         elif self.anntype == 'keypoints':
             self.get_annotation = self.get_keypoints
 
@@ -607,47 +612,64 @@ class coco_base_(Dataset, data_loader.base):
         return len(self.ids_img)
     
 
-    def get_bbox(self, ann):
+    def _get_bbox(self, ann):
 
-        #included = int(ann['category_id']) in self.map_catID.keys()
-        #if len(ann['bbox']) == 0:
-            #print("NO BOX")
-            #ret = [None, None, None, None, None]
-        #    ret = None
-        #elif included == False:
-            #print("not included")
-            #ret = [None, None, None, None, None]
-        #    ret = None
-        #else:
-            
         x1 = float(ann['bbox'][0])
         y1 = float(ann['bbox'][1])
         w = float(ann['bbox'][2])
         h = float(ann['bbox'][3])
         id_cat = self.map_catID[int(ann['category_id'])]
-        ret = [x1, y1, w, h, id_cat]
-        return ret
+        #ret = 
+        #return np.array([x1, y1, w, h, id_cat])
+        return [x1, y1, w, h, id_cat]
 
-    def get_keypoints(self, ann):
+    def get_bboxes(self, img, anns):
+        
+        labels = [self._get_bbox(a) for a in anns if (len(a['bbox']) > 0) and (int(a['category_id']) in self.map_catID.keys())]
+        if len(labels) > 0:
+            #ret = [x1, y1, w, h, id_cat]
+            labels = np.array(labels)
+            labels[:, 2:4] = np.clip(labels[:, 2:4], 0.1, 416 - 0.1)
+            augmented = self.transformer(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
+            #https://github.com/aleju/imgaug
+
+        else:
+            #print("no labels")
+            augmented = {"image":img, "bboxes":[], "category_id":[]}
+
+        return augmented
+
+
+    def _get_keypoints(self, ann):
 
         if ann['num_keypoints'] == 0:
-            #print("NO keypoints")
-            #print(ann)
             return None
-        #ann['keypoints'].__len__ (21) -> joints.shape(7, 3)
+
         joints = np.array(ann['keypoints']).reshape((-1, 3))
-        #print(ann['keypoints'], joints.shape)
         return joints
+
+
+    def get_keypoints(self, img, anns):
+
+        labels = [self._get_keypoints(a) for a in anns if len(a['keypoints']) > 0]
+        if len(labels) > 0:
+            if self.transformer is not None:
+                augmented = self.transformer(image=img, keypoints=labels)
+            else:
+                augmented = {"image":img, "keypoints":labels}
+        else:
+            #print("no labels")
+            augmented = {"image":img, "keypoints":[], "category_id":[]}
+        return augmented
+
 
     def __getitem__(self, i):
 
-        #print(i)
         img_id = self.ids_img[i]
         img_name = self.coco.imgs[img_id]['file_name']
         img_path = self.img_dir + img_name
         if os.path.exists(img_path) == False:
-            #print("no file")
-            return {"image":None, "bboxes":[], "category_id":[]}
+            return {"image":None, "bboxes":[], "category_id":[], "keypoints":[]}
         else:
             img = io.imread(img_path)
             if img.ndim == 2:
@@ -657,30 +679,11 @@ class coco_base_(Dataset, data_loader.base):
         ann_ids = self.coco.getAnnIds(imgIds=img_id)
         anns = self.coco.loadAnns(ann_ids)
 
-        labels = []
-        if len(anns) == 0:
-            #print("zero annotations")
-            return {"image":img, "bboxes":[], "category_id":[]}
-        else:
-            labels = [self.get_bbox(a) for a in anns if (len(a['bbox']) > 0) and (int(a['category_id']) in self.map_catID.keys())]
+        data = self.get_annotation(img, anns)
 
-        if len(labels) > 0:
-            labels = np.array(labels)
-            labels[:, 2:4] = np.clip(labels[:, 2:4], 0.1, 416 - 0.1)
-            augmented = self.transformer(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
-        else:
-            #print("no labels")
-            return {"image":img, "bboxes":[], "category_id":[]}
+        return data
 
-        return augmented
 
-    def collate_fn(self, batch):
-
-        images = [b["image"] for b in batch if len(b["bboxes"]) > 0]
-        x1y1wh_trans = [b["bboxes"] for b in batch if len(b["bboxes"]) > 0]
-        id_trans = [b["category_id"] for b in batch if len(b["bboxes"]) > 0]
-        targets = [np.concatenate([x1y1wh_to_xywh(_x1y1wh), np.array(_id)[:, np.newaxis]], axis = 1) for _x1y1wh, _id in zip(x1y1wh_trans, id_trans)]
-        return images, targets
 
 class coco_base_specific_(coco_base_):
 
@@ -926,6 +929,7 @@ if __name__ == '__main__':
 
     elif sys.argv[1] == "keypoints":
         cfg.FORM = "xyc"
+        #check_keypoints(cfg, coco, compose_keypoints)
         check_keypoints(cfg, coco, None)
     elif sys.argv[1] == "bbox":
         #cfg.FORM = "icxywh_normalized"
