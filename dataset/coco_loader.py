@@ -8,172 +8,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from dataset import data_loader
 import time
 
-#class coco_base(data_loader.base_augmentation):
-class coco_base(data_loader.base_augmentation0):
-
-    def __init__(self, cfg, data='train', transformer = None, name="2017"):
-        super(coco_base, self).__init__(cfg, transformer)
-        
-        self.__data = data
-        self.data_dir = cfg.PATH
-        self.n_class = cfg.NUM_CLASSES
-        self.coco = None
-        
-        if self.anntype == 'bbox':
-            self.get_annotation = self.get_bbox
-        elif self.anntype == 'keypoints':
-            self.get_annotation = self.get_keypoints
-
-        self.pycocoloader(cfg, data, transformer, name)
-
-    def initialize_loader(self):
-        self.get_ids_image()
-        self.__loop = 0
-        self.indeces_batchs = self.get_indeces_batches()
-        
-    def get_prefix(self, v):
-        __prefix = 'instances'
-        if v == "bbox":
-            __prefix = 'instances'
-        elif v == "keypoints":
-            __prefix = 'person_keypoints'
-        elif v == "captions":
-            __prefix = 'captions'
-        else:
-            raise ValueError("choose from [bbox, keypoints, captions]")
-        return __prefix
-
-    def get_dataName(self, data, name):
-        if data == 'check':
-            return 'val' + name
-        else:
-            return data + name
-
-    def pycocoloader(self, cfg, data, transformer, name):
-        
-        prefix = self.get_prefix(cfg.ANNTYPE)
-        dataName = self.get_dataName(data, name) # train2014
-        self.img_dir = self.data_dir + '/images/' + dataName + '/'
-        annfname = '%sannotations/%s_%s.json'%(self.data_dir, prefix, dataName)
-        print(annfname)
-        self.coco = COCO(annfname)
-        self.ids_img = []
-        self.map_catID = {}
-
-
-    def get_ids_image(self):
-        raise NotImplementedError()
-
-    def __next__(self):
-        if self.__loop >= len(self.indeces_batchs):
-            self.initialize_loader()
-            raise StopIteration()
-        _ids = self.indeces_batchs[self.__loop]
-        img_list, target_list = self.load(_ids)
-        self.__loop += 1
-        return (img_list, target_list)
-
-    def __len__(self):#length of mini-batches
-        #return self.num_data // self.batchsize
-        return self.num_data
-
-    def categories(self):
-        nms = [str(i+1) for i in range(self.n_class)]
-        return nms
-
-
-    @property
-    def num_data(self):
-        return len(self.ids_img)
-
-    def get_bbox(self, ann):
-
-        #included = int(ann['category_id']) in self.map_catID.keys()
-        #if len(ann['bbox']) == 0:
-            #print("NO BOX")
-            #ret = [None, None, None, None, None]
-        #    ret = None
-        #elif included == False:
-            #print("not included")
-            #ret = [None, None, None, None, None]
-        #    ret = None
-        #else:
-            
-        x1 = float(ann['bbox'][0])
-        y1 = float(ann['bbox'][1])
-        w = float(ann['bbox'][2])
-        h = float(ann['bbox'][3])
-        id_cat = self.map_catID[int(ann['category_id'])]
-        ret = [x1, y1, w, h, id_cat]
-        return ret
-
-    def get_keypoints(self, ann):
-
-        if ann['num_keypoints'] == 0:
-            #print("NO keypoints")
-            #print(ann)
-            return None
-        #ann['keypoints'].__len__ (21) -> joints.shape(7, 3)
-        joints = np.array(ann['keypoints']).reshape((-1, 3))
-        #print(ann['keypoints'], joints.shape)
-        return joints
-
-
-    def load(self, _ids_img):
-
-        #https://pytorch.org/docs/stable/_modules/torchvision/datasets/coco.html#CocoDetection
-        img_list = []
-        target_list = []
-        for i, _v in enumerate(_ids_img):
-            #img
-            img_id = self.ids_img[_v]
-            img_name = self.coco.imgs[img_id]['file_name']
-            img_path = self.img_dir + img_name
-            if os.path.exists(img_path) == False:
-                print("no file")
-                continue
-            else:
-                #start = time.time()
-                img = io.imread(img_path)
-                #print ("load image:{0}".format(time.time() - start) + "[sec]")
-                #print(np.max(img), np.min(img))#0-255
-
-                if img.ndim == 2:
-                    img = np.expand_dims(img, 2)
-                    img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3))
-
-            #target
-            ann_ids = self.coco.getAnnIds(imgIds=img_id)
-            anns = self.coco.loadAnns(ann_ids)
-            target = []
-
-            if len(anns) == 0:
-                continue
-
-            #start = time.time()
-            for ann in anns:
-                #print(ann)
-                ret = self.get_annotation(ann)
-                #ret = self.get_bbox(ann)
-                #print(ret)
-                if ret is None:
-                    continue
-                else:
-                    target.append(ret)
-            #print ("Get annotation:{0}".format(time.time() - start) + "[sec]")
-
-            if len(target) == 0:
-                continue
-            else:
-                target_list.append(target)
-                img_list.append(img)
-        
-        #start = time.time()
-        img_list, target_list = self.transform(img_list, target_list)
-        #print ("transform images and annotations:{0}".format(time.time() - start) + "[sec]")
-        #print(target_list)
-        return img_list, target_list
-
 
 def func_all(coco):
     __ret_img = []
@@ -185,6 +19,7 @@ def func_all(coco):
         #print(cat)
         catIds = coco.getCatIds(catNms=cat)
         __map_catID[int(catIds[-1])] = _loop
+    __map_catID["id"] = "img"
     return __ret_img, __map_catID
     
 def func_commercial(coco):
@@ -200,6 +35,7 @@ def func_commercial(coco):
         if id_license >= 4:
             #ret.append(cc.imgs[i]['id'])
             __ret_img.append(_id)
+    __map_catID["id"] = "img"
     return __ret_img, __map_catID
     
 def func_custom1(coco):
@@ -221,6 +57,7 @@ def func_custom1(coco):
         else:
             continue
         __ret_img += np.array(imgIds)[idx].tolist()
+    __map_catID["id"] = "img"
     return __ret_img, __map_catID
 
 def func_vehicle(coco):
@@ -233,102 +70,39 @@ def func_vehicle(coco):
         imgIds = coco.getImgIds(catIds=catIds)
         __map_catID[int(catIds[-1])] = _loop
         __ret_img += imgIds
+    __map_catID["id"] = "img"
     return __ret_img, __map_catID
 
 
-class coco_base_specific(coco_base):
 
-    def __init__(self, cfg, data='train', transformer = None, name="2017"):
-        super(coco_base_specific, self).__init__(cfg, data, transformer, name)
-        
-        self.ids_funcs = {}
-        self.set_ids_function("all", func_all)
-
-    @property
-    def ids_image_form(self):
-        return self.__ids_image_form
-
-    @ids_image_form.setter
-    def ids_image_form(self, v):
-        print(v)
-        print(self.ids_funcs.keys())
-        if v in self.ids_funcs.keys():
-            self.__ids_image_form = v
-        else:
-            self.__ids_image_form = "commercial"
-            cmt = ""
-            for loop in self.ids_funcs.keys():
-                cmt += loop + ", "
-            raise ValueError("choose from " + cmt)
-
-    def get_ids_image(self):
-
-        key = self.ids_image_form
-        if key in self.ids_funcs.keys():
-            self.ids_img, self.map_catID = self.ids_funcs[key](self.coco)
-        else:
-            raise ValueError("set ids_image_form correctly")
-
-    def set_ids_function(self, key4func, func):
-        self.ids_funcs[key4func] = func
-
-
-class coco_specific(coco_base_specific):
-    """
-    Arg:
-        cfg : configuration given by EasyDict.
-             PATH, IDS, ANNTYPE, BATCHSIZE, NUM_CLASSES should be given. 
-             
-        data : "train", "val", "test", "check"
-
-        transformer : Compose object from albumentations should be given.
-                     image and its annotation will be augmentated by Compose.
-
-        name : the COOC dataset year(str number) that you want to use.
+def func_person(coco):
+    __ret_ann = []
+    __map_catID = {}
     
-    Example:
-        from easydict import EasyDict as edict
-        from dataset.augmentator import get_compose, get_compose_keypoints
-        from albumentations import Compose
-        from albumentations.augmentations.transforms import Resize
+    for aid, ann in coco.anns.items():
+        if ann['num_keypoints'] > 0:
+            #__ret_img.append(ann['image_id'])
+            #__ret_ann.append(aid)
+            __ret_ann.append([aid, ann['image_id']])
 
-        cfg = edict()
-        cfg.PATH = '/data/public_data/COCO2017/'
-        cfg.ANNTYPE = 'bbox'
-        cfg.BATCHSIZE = 32
-        tf = Compose([Resize(image_height, image_width, p=1.0)],\
-                      bbox_params={'format':format, 'label_fields':['category_id']})
-
-        dataloader = coco_base(cfg, "train", tf, "2017")
-        imgs, annotations, dataloader.__next__()
-    """
-
-    def __init__(self, cfg, data='train', transformer = None, name="2017"):
-        
-        super(coco_specific, self).__init__(cfg, data, transformer, name)
-        
-        self.set_ids_function("commercial", func_commercial)
-        self.set_ids_function("custom1", func_custom1)
-        self.set_ids_function("vehicle", func_vehicle)
-
-        self.ids_image_form = cfg.IDS #'all', ''
-        self.initialize_loader()
+    __map_catID["id"] = "ann+img"
+    return __ret_ann, __map_catID
 
 
-class coco2014(coco_specific):
-    name = 'coco2014'
-    use = 'localization'
-    def __init__(self, cfg, data='train', transformer=None):
-        self.year = "2014"
-        super(coco2014, self).__init__(cfg, data, transformer, name="2014")
 
-class coco2017(coco_specific):
-    name = 'coco2017'
-    use = 'localization'
-    def __init__(self, cfg, data='train', transformer=None):
-        self.year = "2017"
-        super(coco2017, self).__init__(cfg, data, transformer, name="2017")
-        
+def func_person0(coco):
+    __ret_img = []
+    __map_catID = {}
+    
+    for aid, ann in coco.anns.items():
+        if ann['num_keypoints'] > 0:
+            __ret_img.append(ann['image_id'])
+
+    __ret_img_unique = np.unique(__ret_img)
+    __map_catID["id"] = "img"
+    return __ret_img_unique, __map_catID
+
+
 
 
 def draw_box(img, target, fmt="xywhc"):
@@ -399,13 +173,22 @@ def check_keypoints(cfg, coco, compose):
                 x = int(xy[0])
                 y = int(xy[1])
                 rr, cc = circle(y, x, 5, ret.shape)
-                ret[rr, cc, :] = (255, 0, 0)
+                #print(xy)
+                if xy[2] == 1:
+                    _color = (0, 64, 0)
+                elif xy[2] == 2:
+                    _color = (255, 0, 0)
+                else:
+                    continue
+                ret[rr, cc, :] = _color
         return ret
 
     path = "./img_loader/dataset/temp/"
     operator.remove_files(path)
     operator.make_directory(path)
     cfg.ANNTYPE = 'keypoints'
+    #cfg.IDS = 'all'
+    cfg.IDS = 'person'
 
     for dtype in ["val"]:
         data_ = coco2017_(cfg, dtype, compose)
@@ -414,8 +197,13 @@ def check_keypoints(cfg, coco, compose):
                             shuffle=False, num_workers=2, collate_fn=data_.collate_fn)
 
         for i, (imgs, anns) in enumerate(loader):
+            #print(np.array(imgs).shape, len(anns))
             #print(np.array(anns).shape, np.array(img).shape)
             for ii, (img_each, ann_each) in enumerate(zip(imgs, anns)):
+
+                #print(ii)
+                #print(ann_each, np.array(ann_each).shape)
+
                 fname = path + str(i*32 + ii) + ".jpg"
                 i_ret = make_keypoint(img_each, ann_each)
                 pl.clf()
@@ -511,6 +299,8 @@ def check_cocoapi(cfg, coco, compose, year):
     imgIds_2 = cc.getImgIds(catIds=catIds_2)
     imgIds_3 = cc.getImgIds()
 
+    
+
     print(len(imgIds_1), "imgIds_1")
     print(len(imgIds_2), "imgIds_2")
     print(len(imgIds_3), "imgIds_3")
@@ -539,8 +329,13 @@ def check_cocoapi(cfg, coco, compose, year):
         #print(len(anns))
         #print((np.array(anns["bbox"])[:, 4] == i).shape)
 
+    #print(cc.anns.items())
+
 
 from torch.utils.data import DataLoader, Dataset
+import albumentations as A 
+from albumentations import Compose
+from albumentations.augmentations.transforms import Crop
 
 class coco_base_(Dataset, data_loader.base):
     def __init__(self, cfg, data='train', transformer=None, name="2017"):
@@ -548,7 +343,7 @@ class coco_base_(Dataset, data_loader.base):
         self.anntype = cfg.ANNTYPE
         self.__data = data
         self.data_dir = cfg.PATH
-        self.n_class = cfg.NUM_CLASSES
+        #self.n_class = cfg.NUM_CLASSES
         self.transformer = transformer
         self.pycocoloader(cfg, data, name)
 
@@ -592,7 +387,8 @@ class coco_base_(Dataset, data_loader.base):
         annfname = '%sannotations/%s_%s.json'%(self.data_dir, prefix, dataName)
         print(annfname)
         self.coco = COCO(annfname)
-        self.ids_img = []
+        #self.ids_img = []
+        self.ids = []
         self.map_catID = {}
 
 
@@ -609,7 +405,7 @@ class coco_base_(Dataset, data_loader.base):
 
     @property
     def num_data(self):
-        return len(self.ids_img)
+        return len(self.ids)
     
 
     def _get_bbox(self, ann):
@@ -639,37 +435,48 @@ class coco_base_(Dataset, data_loader.base):
 
         return augmented
 
-
-    def _get_keypoints(self, ann):
-
-        if ann['num_keypoints'] == 0:
-            return None
-
-        joints = np.array(ann['keypoints']).reshape((-1, 3))
-        return joints
-
-
     def get_keypoints(self, img, anns):
-
-        labels = [self._get_keypoints(a) for a in anns if len(a['keypoints']) > 0]
-        if len(labels) > 0:
-            if self.transformer is not None:
-                augmented = self.transformer(image=img, keypoints=labels)
-            else:
-                augmented = {"image":img, "keypoints":labels}
-        else:
-            #print("no labels")
+        
+        #print(anns)
+        if len(anns) == 0:
             augmented = {"image":img, "keypoints":[], "category_id":[]}
-        return augmented
 
+        else:
+            #joints = [np.array(a['keypoints']).reshape((-1, 3)) for a in anns]
+            joints = [np.array(a['keypoints']).reshape((-1, 3)) for a in anns if np.sum(np.array(a['keypoints'])) != 0]
+            
+
+            #joints = np.array(anns['keypoints']).reshape((-1, 3))
+            #joints_vis = joints[:, -1].reshape((-1, 1))
+            if self.transformer is not None:
+                augmented = self.transformer(image=img, keypoints=joints)
+            else:
+                augmented = {"image":img, "keypoints":joints}
+            
+        return augmented
 
     def __getitem__(self, i):
 
-        img_id = self.ids_img[i]
+        if self.map_catID["id"] == "img":
+            return self.__getitem__img(i)
+
+        elif self.map_catID["id"] == "ann+img":
+            return self.__getitem__ann_img(i)
+
+        
+    def __getitem__img(self, i):
+
+        #if self.map_catID["id"] == "img":
+        #if self.map_catID["id"] == "ann":
+        #if self.map_catID["id"] == "ann+img":
+        #    img_id = self.ids[i][1]
+
+        img_id = self.ids[i]
         img_name = self.coco.imgs[img_id]['file_name']
         img_path = self.img_dir + img_name
         if os.path.exists(img_path) == False:
             return {"image":None, "bboxes":[], "category_id":[], "keypoints":[]}
+
         else:
             img = io.imread(img_path)
             if img.ndim == 2:
@@ -684,16 +491,65 @@ class coco_base_(Dataset, data_loader.base):
         return data
 
 
+    def __getitem__ann_img(self, i):
+        #https://github.com/albumentations-team/albumentations_examples/blob/master/notebooks/example_keypoints.ipynb
+
+
+        ann_id = self.ids[i][0]
+        img_id = self.ids[i][1]
+        
+        img_name = self.coco.imgs[img_id]['file_name']
+        img_path = self.img_dir + img_name
+        if os.path.exists(img_path) == False:
+            return {"image":None, "bboxes":[], "category_id":[], "keypoints":[]}
+
+        else:
+            img = io.imread(img_path)
+            if img.ndim == 2:
+                img = np.expand_dims(img, 2)
+                img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3))
+
+        anns = self.coco.loadAnns(ann_id)
+        #bbox = anns[0]["bbox"]
+        joints = np.array(anns[0]['keypoints']).reshape((-1, 3))
+        joints_num = np.array(range(joints.shape[0]))[:, np.newaxis]
+        joints = np.concatenate((joints, joints_num), axis = 1)
+        joints_new = joints[joints[:, 2] > 0]
+        ofs = 20
+        _x_min = int(max([np.min(joints_new[:, 0]) - ofs, 0]))
+        _y_min = int(max([np.min(joints_new[:, 1]) - ofs, 0]))
+        _x_max = int(min([np.max(joints_new[:, 0]) + ofs, img.shape[1]-1]))
+        _y_max = int(min([np.max(joints_new[:, 1]) + ofs, img.shape[0]-1]))
+        crop = Compose([Crop(x_min=_x_min, y_min=_y_min, x_max=_x_max, y_max=_y_max, always_apply=True)],\
+                        keypoint_params=A.KeypointParams(format='xy'))
+
+        img_cropped = crop(image=img, keypoints=joints)
+        #print(len(img_cropped["keypoints"]), np.array(img_cropped["keypoints"]).shape)
+        #img_cropped["keypoints"] = [img_cropped["keypoints"]]
+
+        if self.transformer is not None:
+            augmented = self.transformer(image=img_cropped["image"], keypoints=img_cropped["keypoints"])
+            augmented["keypoints"] = [augmented["keypoints"]]
+        else:
+            img_cropped["keypoints"] = [img_cropped["keypoints"]]
+            augmented = {"image":img_cropped["image"], "keypoints":img_cropped["keypoints"]}
+            
+        return augmented
+
 
 class coco_base_specific_(coco_base_):
 
     def __init__(self, cfg, data='train', transformer = None, name="2017"):
+        
         super(coco_base_specific_, self).__init__(cfg, data, transformer, name=name)
         self.ids_funcs = {}
         self.set_ids_function("all", func_all)
         self.set_ids_function("commercial", func_commercial)
         self.set_ids_function("custom1", func_custom1)
         self.set_ids_function("vehicle", func_vehicle)
+        self.set_ids_function("person", func_person)
+
+        
         self.ids_image_form = cfg.IDS #'all', ''
         self.initialize_loader()
 
@@ -718,7 +574,13 @@ class coco_base_specific_(coco_base_):
 
         key = self.ids_image_form
         if key in self.ids_funcs.keys():
-            self.ids_img, self.map_catID = self.ids_funcs[key](self.coco)
+            #self.ids_img, self.map_catID = self.ids_funcs[key](self.coco)
+            self.ids, self.map_catID = self.ids_funcs[key](self.coco)
+            #if self.map_catID["id"] == "img":
+            #    self.__getitem__ = self.__getitem__img
+            #elif self.map_catID["id"] == "ann+img":
+            #    self.__getitem__ = self.__getitem__ann_img
+
         else:
             raise ValueError("set ids_image_form correctly")
 
@@ -870,7 +732,7 @@ if __name__ == '__main__':
     np.random.seed(9999)
     from easydict import EasyDict as edict
     from dataset.augmentator import get_compose_resize, get_compose, get_compose_resize2, get_compose_resize4
-    from dataset.augmentator import get_compose_keypoints
+    from dataset.augmentator import get_compose_keypoints0
     from dataset.augmentator import get_compose_resize5
 
     cfg = edict()
@@ -878,11 +740,11 @@ if __name__ == '__main__':
     if False:
         year = '2014'
         cfg.PATH = '/data/public_data/COCO2014/'
-        coco = coco2014
+        coco = coco2014_
     else:
         year = '2017'
         cfg.PATH = '/data/public_data/COCO2017/'
-        coco = coco2017
+        coco = coco2017_
 
     cfg.ANNTYPE = 'bbox'
     cfg.IDS = 'all'
@@ -905,7 +767,7 @@ if __name__ == '__main__':
     fmt = "coco"
 
     
-    compose_keypoints = get_compose_keypoints(crop_min_max, image_size, image_size, 
+    compose_keypoints = get_compose_keypoints0(crop_min_max, image_size, image_size, 
                                     hue_shift, saturation_shift, value_shift, fmt)
 
     #compose = get_compose_resize( image_size, image_size, fmt)
@@ -924,13 +786,14 @@ if __name__ == '__main__':
 
     if sys.argv[1] == "loader":
         #cfg.FORM = "icxywh_normalized"
-        cfg.FORM = "xywhc"
+        
+        
         check_loader(cfg, coco, compose)
 
     elif sys.argv[1] == "keypoints":
         cfg.FORM = "xyc"
-        #check_keypoints(cfg, coco, compose_keypoints)
-        check_keypoints(cfg, coco, None)
+        check_keypoints(cfg, coco, compose_keypoints)
+        #check_keypoints(cfg, coco, None)
     elif sys.argv[1] == "bbox":
         #cfg.FORM = "icxywh_normalized"
         cfg.FORM = "xywhc"
@@ -949,7 +812,7 @@ if __name__ == '__main__':
         plot_num_dataset(path, data_type, [object_num_train, object_num_val], ["train", "val"])
 
     elif sys.argv[1] == "cocoapi":
-         check_cocoapi(cfg, coco, compose, year)
+        check_cocoapi(cfg, coco, compose, year)
     #check_licence(cfg, coco, compose)
     #check_annotations(cfg, coco, compose, year)
    

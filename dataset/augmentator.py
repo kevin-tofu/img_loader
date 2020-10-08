@@ -131,22 +131,21 @@ def get_compose0(crop_min_max, image_height, image_width, hue_shift, saturation_
 def get_compose_keypoints0(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
     return Compose([Resize(image_height, image_width, p=1.0),\
                     HorizontalFlip(p=0.5),\
-                    RandomSizedCrop(crop_min_max, image_height, image_width, p=1.0),\
-                    HueSaturationValue(hue_shift, saturation_shift, value_shift, p=1.0), \
-                    Normalize(always_apply=True)],\
-                    keypoint_params=A.KeypointParams(format='xy', label_fields=['class', 'person']))
+                    RandomSizedCrop(crop_min_max, image_height, image_width, w2h_ratio=0.74, p=1.0),\
+                    HueSaturationValue(hue_shift, saturation_shift, value_shift, p=1.0),],\
+                    keypoint_params=A.KeypointParams(format='xy'))
 
 
 def get_compose_keypoints(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
 
     return Compose([Resize(image_height, image_width, p=1.0),\
                     HorizontalFlip(p=0.5),\
-                    RandomSizedCrop(crop_min_max, image_height, image_width, p=0.2),\
+                    RandomSizedCrop(crop_min_max, image_height, image_width, w2h_ratio=0.75, p=0.2),\
                     HueSaturationValue(hue_shift, saturation_shift, value_shift, p=0.2),\
                     RandomGamma(p=0.5), \
                     GaussNoise(p=0.2), \
                     Blur(p=0.3), \
                     RGBShift(p=0.9), \
                     Normalize(always_apply=True)], \
-                    keypoint_params=A.KeypointParams(format='xy', label_fields=['class', 'person']))
+                    keypoint_params=A.KeypointParams(format='xy'))
 

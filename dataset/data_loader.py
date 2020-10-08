@@ -34,8 +34,12 @@ def collate_fn_bbox(batch):
 
 def collate_fn_keypoints(batch):
 
-    images = [b["image"] for b in batch if len(b["keypoints"]) > 0]
-    targets = [b["keypoints"] for b in batch if len(b["keypoints"]) > 0]
+    # remove data without keypoints
+    #images = [b["image"] for b in batch if len(b["keypoints"]) > 0]
+    #targets = [b["keypoints"] for b in batch if len(b["keypoints"]) > 0]
+
+    images = [b["image"] for b in batch]
+    targets = [b["keypoints"] for b in batch]
     return images, targets
     
 class base(object):
@@ -74,6 +78,7 @@ class base(object):
         self.__keys_bbox.append("xywhc_normalized")
         self.__keys_keypoints = []
         self.__keys_keypoints.append("xyc")
+        self.__keys_keypoints.append("bxyc")
 
     @property
     def form(self):
