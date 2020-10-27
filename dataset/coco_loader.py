@@ -73,8 +73,6 @@ def func_vehicle(coco):
     __map_catID["id"] = "img"
     return __ret_img, __map_catID
 
-
-
 def func_person(coco):
     __ret_ann = []
     __map_catID = {}
@@ -101,8 +99,6 @@ def func_person0(coco):
     __ret_img_unique = np.unique(__ret_img)
     __map_catID["id"] = "img"
     return __ret_img_unique, __map_catID
-
-
 
 
 def draw_box(img, target, fmt="xywhc"):
@@ -411,21 +407,26 @@ class coco_base_(Dataset, data_loader.base):
     
 
     def _get_bbox(self, ann):
+
+        #xywh (x_center, y_center, width, height)
         x1 = float(ann['bbox'][0])
         y1 = float(ann['bbox'][1])
         w = float(ann['bbox'][2])
         h = float(ann['bbox'][3])
         id_cat = self.map_catID[int(ann['category_id'])]
-        return [x1, y1, w, h, id_cat]
 
+        return [x1, y1, w, h, id_cat]
+        
 
     def get_bboxes(self, img, anns):
         
         labels = [self._get_bbox(a) for a in anns if (len(a['bbox']) > 0) and (int(a['category_id']) in self.map_catID.keys())]
         if len(labels) > 0:
             #ret = [x1, y1, w, h, id_cat]
+            labels = [ls for ls in labels if (ls[2] > 3.) and (ls[3] > 3.) ]
             labels = np.array(labels)
-            labels[:, 2:4] = np.clip(labels[:, 2:4], 0.1, 416 - 0.1)
+            
+            #labels[:, 2:4] = np.clip(labels[:, 2:4], 0.1, 416 - 0.1)
             if self.transformer is not None:
                 augmented = self.transformer(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
             else:
@@ -504,7 +505,7 @@ class coco_base_(Dataset, data_loader.base):
             img = io.imread(img_path)
             if img.ndim == 2:
                 img = np.expand_dims(img, 2)
-                img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3))
+                img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3)) #(y, x, c)
             
         ann_ids = self.coco.getAnnIds(imgIds=img_id)
         anns = self.coco.loadAnns(ann_ids)
@@ -857,7 +858,6 @@ if __name__ == '__main__':
     compose = get_compose_resize5(crop_min_max, image_size, image_size, 
                                   hue_shift, saturation_shift, value_shift, fmt)
     #compose = None
-
 
     print(sys.argv[1])
     if len(sys.argv) > 2:
