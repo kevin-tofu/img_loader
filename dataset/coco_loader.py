@@ -421,9 +421,10 @@ class coco_base_(Dataset, data_loader.base):
     def get_bboxes(self, img, anns):
         
         labels = [self._get_bbox(a) for a in anns if (len(a['bbox']) > 0) and (int(a['category_id']) in self.map_catID.keys())]
+        labels = [ls for ls in labels if (ls[2] > 3.) and (ls[3] > 3.)]
         if len(labels) > 0:
             #ret = [x1, y1, w, h, id_cat]
-            labels = [ls for ls in labels if (ls[2] > 3.) and (ls[3] > 3.) ]
+            
             labels = np.array(labels)
             
             #labels[:, 2:4] = np.clip(labels[:, 2:4], 0.1, 416 - 0.1)
