@@ -161,11 +161,9 @@ def check_keypoints(cfg, coco, compose):
     def make_keypoint(img, ann):
         
         ret = np.copy(img)
-        #print(ret.shape, ann.shape)
         for a in ann:
-            if a is None:
-                continue
             for xy in a:
+                #print(xy)
                 x = int(xy[0])
                 y = int(xy[1])
                 rr, cc = circle(y, x, 5, ret.shape)
@@ -179,7 +177,7 @@ def check_keypoints(cfg, coco, compose):
                 ret[rr, cc, :] = _color
         return ret
 
-    path = "./img_loader/dataset/temp/"
+    path = "./dataset/temp3/"
     operator.remove_files(path)
     operator.make_directory(path)
     cfg.ANNTYPE = 'keypoints'
@@ -197,7 +195,7 @@ def check_keypoints(cfg, coco, compose):
         for i, (imgs, anns) in enumerate(loader):
             #print(np.array(imgs).shape, len(anns))
             #print(np.array(anns).shape, np.array(img).shape)
-            for ii, (img_each, ann_each) in enumerate(zip(imgs, anns)):
+            for ii, (img_each, ann_each) in enumerate(zip(imgs, anns[0])):
 
                 #print(ii)
                 #print(ann_each, np.array(ann_each).shape)

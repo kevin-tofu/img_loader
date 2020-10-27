@@ -107,8 +107,7 @@ def get_compose_keypoints0(image_height, image_width):
     hue_shift = 10
     saturation_shift = 10
     value_shift = 10
-    #resize_to1 = (256*2, 192*2)
-    resize_to2 = (416, 416)
+    resize_to2 = (image_height, image_width)
     # HSV shift limits
     hue_shift = 10
     saturation_shift = 10
@@ -151,14 +150,6 @@ def get_compose0(crop_min_max, image_height, image_width, hue_shift, saturation_
                     HueSaturationValue(hue_shift, saturation_shift, value_shift, p=1.0), \
                     Normalize(always_apply=True)],\
                     bbox_params={'format':format, 'label_fields':['category_id']}, 
-                    keypoint_params=A.KeypointParams(format='xy'))
-
-
-def get_compose_keypoints0(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
-    return Compose([Resize(image_height, image_width, p=1.0),\
-                    HorizontalFlip(p=0.5),\
-                    RandomSizedCrop(crop_min_max, image_height, image_width, w2h_ratio=0.74, p=1.0),\
-                    HueSaturationValue(hue_shift, saturation_shift, value_shift, p=1.0),],\
                     keypoint_params=A.KeypointParams(format='xy'))
 
 
