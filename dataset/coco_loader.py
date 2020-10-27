@@ -134,15 +134,15 @@ def draw_box(img, target, fmt="xywhc"):
             x2 = int(t[0] * (img.shape[1] - 1) + w / 2) - 1
             y2 = int(t[1] * (img.shape[0] - 1) + h / 2) - 1
 
-        x1 = np.clip(x1, 0, ret.shape[1] - 1)
-        x2 = np.clip(x2, 0, ret.shape[1] - 1)
-        y1 = np.clip(y1, 0, ret.shape[0] - 1)
-        y2 = np.clip(y2, 0, ret.shape[0] - 1)
+        x1 = np.clip(x1, 0, ret.shape[1] - 4)
+        x2 = np.clip(x2, 0, ret.shape[1] - 4)
+        y1 = np.clip(y1, 0, ret.shape[0] - 4)
+        y2 = np.clip(y2, 0, ret.shape[0] - 4)
         print(x1, y1, x2, y2, ret.dtype, ret.shape)
         color_line = np.array([255, 0, 0], dtype=np.uint8)
 
         #rr, cc = rectangle(start = (y1, x1), end = (y2 - 1, x2 - 1))
-        rr, cc = rectangle_perimeter(start = (y1, x1), end = (y2 - 2, x2 - 2))
+        rr, cc = rectangle_perimeter(start = (y1, x1), end = (y2, x2))
         
         ret[rr, cc] = color_line
         #ret[rr, cc, 0] = 255
@@ -749,7 +749,7 @@ def check_bbox(cfg, coco, compose=None):
     mpl.use('Agg')
     import pylab as pl
 
-    data = coco(cfg, 'check', compose)
+    #compose = None
     cfg.IDS = 'all'
     #cfg.IDS = 'vehicle'
     data_type = 'val'
@@ -760,7 +760,7 @@ def check_bbox(cfg, coco, compose=None):
                         shuffle=False, num_workers=2, collate_fn=data_.collate_fn)
     #data.form = "x1y1whc"
 
-    path = "./dataset/temp/"
+    path = "./dataset/temp2/"
     operator.remove_files(path)
     operator.make_directory(path)
 
@@ -770,11 +770,11 @@ def check_bbox(cfg, coco, compose=None):
         if i > 3:
             break
         
-        for ii, (c, t) in enumerate(zip(img, target)):
+        for ii, (c, t) in enumerate(zip(img, target[0])):
 
             fname = path + str(i*32 + ii) + ".jpg"
             print(fname)
-            c_box = draw_box(c, t, data.form)
+            c_box = draw_box(c, t, "xywhc")
             pl.clf()
             pl.imshow(c_box)
             pl.savefig(fname)
@@ -812,7 +812,6 @@ if __name__ == '__main__':
     #np.random.seed(1234)
     np.random.seed(9999)
     from easydict import EasyDict as edict
-    from dataset.augmentator import get_compose_resize, get_compose, get_compose_resize2, get_compose_resize4
     from dataset.augmentator import get_compose_keypoints0
     from dataset.augmentator import get_compose_resize5
 
@@ -835,29 +834,13 @@ if __name__ == '__main__':
     
     # Image size for YOLO
     image_size = 416
-    # Crop 80 - 100% of image
-    crop_min = image_size*80//100
-    crop_max = image_size
-    crop_min_max = (crop_min, crop_max)
-    # HSV shift limits
-    hue_shift = 10
-    saturation_shift = 10
-    value_shift = 10
 
     #fmt = "pascal_voc"
     fmt = "coco"
 
     
-    compose_keypoints = get_compose_keypoints0(crop_min_max, image_size, image_size, 
-                                    hue_shift, saturation_shift, value_shift, fmt)
-
-    #compose = get_compose_resize( image_size, image_size, fmt)
-    #compose = get_compose_resize2(crop_min_max, image_size, image_size, 
-    #                              hue_shift, saturation_shift, value_shift, fmt)
-    #compose = get_compose_resize4(crop_min_max, image_size, image_size, 
-    #                              hue_shift, saturation_shift, value_shift, fmt)
-    compose = get_compose_resize5(crop_min_max, image_size, image_size, 
-                                  hue_shift, saturation_shift, value_shift, fmt)
+    compose_keypoints = get_compose_keypoints0(256, 192)
+    compose = get_compose_resize5(image_size, image_size, fmt)
     #compose = None
 
     print(sys.argv[1])
