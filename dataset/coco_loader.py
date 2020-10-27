@@ -191,7 +191,9 @@ def check_keypoints(cfg, coco, compose):
     cfg.IDS = 'person'
 
     for dtype in ["val"]:
+
         data_ = coco2017_(cfg, dtype, compose)
+        #data_ = coco2017_(cfg, dtype, None)
         data_.initialize_loader()
         loader = DataLoader(data_, batch_size=cfg.BATCHSIZE,
                             shuffle=False, num_workers=2, collate_fn=data_.collate_fn)
@@ -239,6 +241,7 @@ def check_licence(cfg, coco, compose):
 
         print(license_num)
         print("Numbers of data", len(data_.coco.imgs))
+
 
 def check_annotations(cfg, coco, compose, year):
     
@@ -299,8 +302,6 @@ def check_cocoapi(cfg, coco, compose, year):
     imgIds_2 = cc.getImgIds(catIds=catIds_2)
     imgIds_3 = cc.getImgIds()
 
-    
-
     print(len(imgIds_1), "imgIds_1")
     print(len(imgIds_2), "imgIds_2")
     print(len(imgIds_3), "imgIds_3")
@@ -338,7 +339,7 @@ from albumentations import Compose
 from albumentations.augmentations.transforms import Crop
 
 class coco_base_(Dataset, data_loader.base):
-    def __init__(self, cfg, data='train', transformer=None, name="2017"):
+    def __init__(self, cfg, data='train', transformer=None, name="2017", cropped=True):
         
         self.anntype = cfg.ANNTYPE
         self.__data = data
@@ -354,6 +355,7 @@ class coco_base_(Dataset, data_loader.base):
             self.get_annotation = self.get_bboxes
         elif self.anntype == 'keypoints':
             self.get_annotation = self.get_keypoints
+            self.cropped_coordinate = cropped
 
     def initialize_loader(self):
         self.get_ids_image()
@@ -409,15 +411,13 @@ class coco_base_(Dataset, data_loader.base):
     
 
     def _get_bbox(self, ann):
-
         x1 = float(ann['bbox'][0])
         y1 = float(ann['bbox'][1])
         w = float(ann['bbox'][2])
         h = float(ann['bbox'][3])
         id_cat = self.map_catID[int(ann['category_id'])]
-        #ret = 
-        #return np.array([x1, y1, w, h, id_cat])
         return [x1, y1, w, h, id_cat]
+
 
     def get_bboxes(self, img, anns):
         
@@ -426,7 +426,10 @@ class coco_base_(Dataset, data_loader.base):
             #ret = [x1, y1, w, h, id_cat]
             labels = np.array(labels)
             labels[:, 2:4] = np.clip(labels[:, 2:4], 0.1, 416 - 0.1)
-            augmented = self.transformer(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
+            if self.transformer is not None:
+                augmented = self.transformer(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
+            else:
+                augmented = dict(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
             #https://github.com/aleju/imgaug
 
         else:
@@ -445,15 +448,35 @@ class coco_base_(Dataset, data_loader.base):
             #joints = [np.array(a['keypoints']).reshape((-1, 3)) for a in anns]
             joints = [np.array(a['keypoints']).reshape((-1, 3)) for a in anns if np.sum(np.array(a['keypoints'])) != 0]
             
+            #center, scale = self._bbox_to_center_and_scale(bbox)
+            #center = d['center']
+            #scale = d['scale']
 
             #joints = np.array(anns['keypoints']).reshape((-1, 3))
             #joints_vis = joints[:, -1].reshape((-1, 1))
             if self.transformer is not None:
                 augmented = self.transformer(image=img, keypoints=joints)
+                #augmented["center"] = anns["center"]
+                #augmented["scale"] = anns["scale"]
+                #return img, score, center, scale, img_id
             else:
+                #augmented = {"image":img, "keypoints":joints}
                 augmented = {"image":img, "keypoints":joints}
+
             
         return augmented
+
+    def _bbox_to_center_and_scale(self, bbox):
+        x, y, w, h = bbox
+
+        center = np.zeros(2, dtype=np.float32)
+        center[0] = x + w / 2.0
+        center[1] = y + h / 2.0
+
+        #scale = np.array([w * 1.0 / self.pixel_std, h * 1.0 / self.pixel_std],
+        #        dtype=np.float32)
+
+        #return center, scale
 
     def __getitem__(self, i):
 
@@ -482,18 +505,48 @@ class coco_base_(Dataset, data_loader.base):
             if img.ndim == 2:
                 img = np.expand_dims(img, 2)
                 img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3))
-
+            
         ann_ids = self.coco.getAnnIds(imgIds=img_id)
         anns = self.coco.loadAnns(ann_ids)
 
         data = self.get_annotation(img, anns)
+        data["id_img"] = img_id
+        data["imsize"] = (data["image"].shape[1], data["image"].shape[0]) # width, height
+        #data["image"] = data["image"].tolist()
 
         return data
+
+    def _bbox_to_center_and_scale(self, bbox):
+        x, y, w, h = bbox
+
+        center = np.zeros(2, dtype=np.float32)
+        center[0] = x + w / 2.0
+        center[1] = y + h / 2.0
+
+        PIXEL_STD = 200
+        scale = np.array([w * 1.0 / PIXEL_STD, h * 1.0 / PIXEL_STD], dtype=np.float32)
+        
+        #TEST.X_EXTENTION = 0.01 * 9.0
+        #TEST.Y_EXTENTION = 0.015 * 9.0
+        test_x_ext = 0.01 * 9.0
+        test_y_ext = 0.015 * 9.0
+        scale[0] *= (1 + test_x_ext)
+        scale[1] *= (1 + test_y_ext)
+
+        #INPUT_SHAPE = (256, 192) # height, width
+        #OUTPUT_SHAPE = (64, 48)
+        #WIDTH_HEIGHT_RATIO = INPUT_SHAPE[1] / INPUT_SHAPE[0]
+        w_h_ratio = 256 / 192
+        if scale[0] > w_h_ratio * scale[1]:
+            scale[1] = scale[0] * 1.0 / w_h_ratio
+        else:
+            scale[0] = scale[1] * 1.0 * w_h_ratio
+
+        return center, scale
 
 
     def __getitem__ann_img(self, i):
         #https://github.com/albumentations-team/albumentations_examples/blob/master/notebooks/example_keypoints.ipynb
-
 
         ann_id = self.ids[i][0]
         img_id = self.ids[i][1]
@@ -510,38 +563,64 @@ class coco_base_(Dataset, data_loader.base):
                 img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3))
 
         anns = self.coco.loadAnns(ann_id)
+        #center, scale = self._bbox_to_center_and_scale(anns[0]['bbox'])
+
         #bbox = anns[0]["bbox"]
         joints = np.array(anns[0]['keypoints']).reshape((-1, 3))
         joints_num = np.array(range(joints.shape[0]))[:, np.newaxis]
         joints = np.concatenate((joints, joints_num), axis = 1)
         joints_new = joints[joints[:, 2] > 0]
-        ofs = 20
+
+        # going to crop images so that ALL keypoints is on cropped image
+        #ofs = 20
+        ofs = 30
+        #ofs = 40
+        #ofs = 80
         _x_min = int(max([np.min(joints_new[:, 0]) - ofs, 0]))
         _y_min = int(max([np.min(joints_new[:, 1]) - ofs, 0]))
         _x_max = int(min([np.max(joints_new[:, 0]) + ofs, img.shape[1]-1]))
         _y_max = int(min([np.max(joints_new[:, 1]) + ofs, img.shape[0]-1]))
-        crop = Compose([Crop(x_min=_x_min, y_min=_y_min, x_max=_x_max, y_max=_y_max, always_apply=True)],\
-                        keypoint_params=A.KeypointParams(format='xy'))
 
-        img_cropped = crop(image=img, keypoints=joints)
-        #print(len(img_cropped["keypoints"]), np.array(img_cropped["keypoints"]).shape)
-        #img_cropped["keypoints"] = [img_cropped["keypoints"]]
+        #center = np.array([(_x_min + _x_max) / 2., (_y_min + _y_max) / 2.])
+        #x, y
+        center = np.array([_x_min, _y_min])
+        scale = np.array([(_x_max - _x_min), (_y_max - _y_min)]) 
+        #scale = np.array([(_x_max - _x_min) / 192., (_y_max - _y_min) / 256.]) 
+        #scale = np.array([(_x_max - _x_min) / 48., (_y_max - _y_min) / 64.])
+
+        #
+        #print("self.cropped_coordinate : ", self.cropped_coordinate)
+        if self.cropped_coordinate == True:
+            crop = Compose([Crop(x_min=_x_min, y_min=_y_min, x_max=_x_max, y_max=_y_max, always_apply=True)],\
+                            keypoint_params=A.KeypointParams(format='xy'))
+            img_cropped = crop(image=img, keypoints=joints)
+
+        else:
+            img_cropped = {"image":img, "keypoints":joints}
 
         if self.transformer is not None:
             augmented = self.transformer(image=img_cropped["image"], keypoints=img_cropped["keypoints"])
             augmented["keypoints"] = [augmented["keypoints"]]
+            augmented["id_img"] = img_id
+            augmented["center"] = center
+            augmented["scale"] = scale
+
         else:
             img_cropped["keypoints"] = [img_cropped["keypoints"]]
-            augmented = {"image":img_cropped["image"], "keypoints":img_cropped["keypoints"]}
+            augmented = {"image":img_cropped["image"], \
+                         "keypoints":img_cropped["keypoints"],
+                         "id_img":img_id,
+                         "center":None,
+                         "scale":None}
             
         return augmented
 
 
 class coco_base_specific_(coco_base_):
 
-    def __init__(self, cfg, data='train', transformer = None, name="2017"):
+    def __init__(self, cfg, data='train', transformer = None, name="2017", cropped=True):
         
-        super(coco_base_specific_, self).__init__(cfg, data, transformer, name=name)
+        super(coco_base_specific_, self).__init__(cfg, data, transformer, name=name, cropped=cropped)
         self.ids_funcs = {}
         self.set_ids_function("all", func_all)
         self.set_ids_function("commercial", func_commercial)
@@ -588,16 +667,16 @@ class coco_base_specific_(coco_base_):
 class coco2017_(coco_base_specific_):
     name = 'coco2017'
     use = 'localization'
-    def __init__(self, cfg, data='train', transformer=None):
+    def __init__(self, cfg, data='train', transformer=None, cropped=True):
         self.year = "2017"
-        super(coco2017_, self).__init__(cfg, data, transformer, name="2017")
+        super(coco2017_, self).__init__(cfg, data, transformer, name="2017", cropped=cropped)
 
 class coco2014_(coco_base_specific_):
     name = 'coco2014'
     use = 'localization'
     def __init__(self, cfg, data='train', transformer=None):
         self.year = "2014"
-        super(coco2014_, self).__init__(cfg, data, transformer, name="2014")
+        super(coco2014_, self).__init__(cfg, data, transformer, name="2014", cropped=cropped)
 
 
 def x1y1wh_to_xywh(label):

@@ -65,40 +65,17 @@ def get_compose_resize4(crop_min_max, image_height, image_width, hue_shift, satu
                     bbox_params={'format':format, 'label_fields':['category_id']})
 
 def get_compose_resize5(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
-
-    #_c = 20
-    #_c = 50
-    _c = 30
-    _c_r = (-_c, _c)
-    #_c_r = (40, 50)
-    return Compose([Resize(image_height, image_width, p=1.0),\
-                    HorizontalFlip(p=0.5),\
-                    RandomSizedCrop(crop_min_max, image_height, image_width, p=0.9),\
-                    GaussNoise(var_limit=[600, 900], p=0.95), \
-                    RandomGamma(gamma_limit = (95, 105) , p=0.33), \
-                    RGBShift(r_shift_limit=_c_r, g_shift_limit=_c_r, b_shift_limit=_c_r, p=0.8), \
-                    ChannelShuffle(p=0.5),\
-                    HueSaturationValue(hue_shift, saturation_shift, value_shift, p=0.10),\
-                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=20, p=0.95), \
-                    Normalize(always_apply=True)\
-                    ], \
-                    bbox_params={'format':format, 'label_fields':['category_id']})
-
-
-def get_compose_resize6(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
-
-    #_c = 20
-    #_c = 50
-    _c = 30
-    _c_r = (-_c, _c)
-    #_c_r = (40, 50)
-    return Compose([Resize(image_height, image_width, p=1.0),\
-                    HorizontalFlip(p=0.5),\
-                    RandomSizedCrop(crop_min_max, image_height, image_width, p=0.9),\
-                    GaussNoise(var_limit=[600, 900], p=0.95), \
-                    RGBShift(r_shift_limit=_c_r, g_shift_limit=_c_r, b_shift_limit=_c_r, p=0.8), \
-                    ChannelShuffle(p=0.5),\
-                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=20, p=0.95), \
+    _c_r = (-10, 10)
+    return Compose([HorizontalFlip(p=0.5),\
+                    RandomSizedCrop(crop_min_max, image_height, image_width, p=0.7),\
+                    Blur(p=0.2), \
+                    GaussNoise(p=0.7), \
+                    RandomGamma(gamma_limit = (95, 105) , p=0.6), \
+                    RGBShift(r_shift_limit=5, g_shift_limit=5, b_shift_limit=5, p=0.6), \
+                    ChannelShuffle(p=0.4),\
+                    HueSaturationValue(hue_shift, saturation_shift, value_shift, p=0.1),\
+                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=20, p=0.9), \
+                    Resize(image_height, image_width, p=1.0),\
                     Normalize(always_apply=True)\
                     ], \
                     bbox_params={'format':format, 'label_fields':['category_id']})
@@ -147,5 +124,46 @@ def get_compose_keypoints(crop_min_max, image_height, image_width, hue_shift, sa
                     Blur(p=0.3), \
                     RGBShift(p=0.9), \
                     Normalize(always_apply=True)], \
+                    keypoint_params=A.KeypointParams(format='xy'))
+
+
+
+def get_compose_keypoints4(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
+    _c_r = (-5, 5)
+    return Compose([Resize(image_height, image_width, p=1.0),\
+                    HorizontalFlip(p=0.5),\
+                    #RandomSizedCrop(crop_min_max, image_height, image_width, p=0.2),\
+                    RandomSizedCrop(crop_min_max, image_height, image_width, w2h_ratio=0.75, p=0.7),\
+                    Blur(p=0.2), \
+                    GaussNoise(p=0.7), \
+                    RandomGamma(gamma_limit = (95, 105) , p=0.6), \
+                    RGBShift(r_shift_limit=5, g_shift_limit=5, b_shift_limit=5, p=0.6), \
+                    ChannelShuffle(p=0.4),\
+                    HueSaturationValue(hue_shift, saturation_shift, value_shift, p=0.1),\
+                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=40, p=0.9), \
+                    Normalize(always_apply=True)\
+                    ], \
+                    keypoint_params=A.KeypointParams(format='xy'))
+
+
+def get_compose_keypoints5(crop_min_max, image_height, image_width, hue_shift, saturation_shift, value_shift, format):
+    _c_r = (-8, 8)
+    return Compose([HorizontalFlip(p=0.5),\
+                    Blur(p=0.2), \
+                    GaussNoise(p=0.7), \
+                    RandomGamma(gamma_limit = (95, 105) , p=0.6), \
+                    RGBShift(r_shift_limit=5, g_shift_limit=5, b_shift_limit=5, p=0.6), \
+                    ChannelShuffle(p=0.4),\
+                    HueSaturationValue(hue_shift, saturation_shift, value_shift, p=0.1),\
+                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=40, p=0.9), \
+                    Resize(image_height, image_width, p=1.0),\
+                    RandomSizedCrop(crop_min_max, image_height, image_width, w2h_ratio=0.75, p=0.7),\
+                    Normalize(always_apply=True)\
+                    ], \
+                    keypoint_params=A.KeypointParams(format='xy'))
+
+def get_compose_keypoints_resize(image_height, image_width, format):
+    return Compose([Resize(image_height, image_width, p=1.0), \
+                    Normalize(always_apply=True)],\
                     keypoint_params=A.KeypointParams(format='xy'))
 

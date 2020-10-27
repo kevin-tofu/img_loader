@@ -6,6 +6,8 @@ from img_loader.dataset import chair_renderer, coco_loader
 from torch.utils.data import DataLoader
 #from utils.utils import *
 #from utils.parse_config import *
+import random
+
 
 def get_train_val(cfg):
 
@@ -42,13 +44,15 @@ def get_train(cfg):
         #train = coco_loader.coco2017(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
         data_ = coco_loader.coco2017_(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
         train = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
-                            shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn)
+                            shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                            worker_init_fn=lambda x: random.seed())
 
     elif cfg.DATASET.NAME == 'COCO2014':
         print('COCO 2014 ')
         data_ = coco_loader.coco2014_(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
         train = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
-                         shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn)
+                         shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                         worker_init_fn=lambda x: random.seed())
     
     return train
 
@@ -59,15 +63,17 @@ def get_val(cfg):
 
     if cfg.DATASET.NAME == 'COCO2017':
         print('COCO 2017 ')
-        data_ = coco_loader.coco2017_(cfg.DATASET, 'val', cfg.DATASET.AUGMENTATOR)
+        data_ = coco_loader.coco2017_(cfg.DATASET, 'val', cfg.DATASET.AUGMENTATOR_val)
         val = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
-                         shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn)
+                         shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                         worker_init_fn=lambda x: random.seed())
 
     elif cfg.DATASET.NAME == 'COCO2014':
         print('COCO 2014 ')
-        data_ = coco_loader.coco2014_(cfg.DATASET, 'val', cfg.DATASET.AUGMENTATOR)
+        data_ = coco_loader.coco2014_(cfg.DATASET, 'val', cfg.DATASET.AUGMENTATOR_val)
         val = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
-                         shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn)
+                         shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                         worker_init_fn=lambda x: random.seed())
     
     return val
 
@@ -81,16 +87,18 @@ def get_test(cfg):
 
     if cfg.DATASET.NAME == 'COCO2017':
         print('COCO 2017 ')
-        data_ = coco_loader.coco2017_(cfg.DATASET, 'val', cfg.DATASET.AUGMENTATOR)
+        data_ = coco_loader.coco2017_(cfg.DATASET, 'val', cfg.DATASET.AUGMENTATOR_val, cfg.DATASET.CROP)
         loader = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
-                         shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn)
+                            shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                            worker_init_fn=lambda x: random.seed())
 
 
     elif cfg.DATASET.NAME == 'COCO2014':
         print('COCO 2014 ')
-        data_ = coco_loader.coco2014_(cfg.DATASET, 'val', cfg.DATASET.AUGMENTATOR)
+        data_ = coco_loader.coco2014_(cfg.DATASET, 'val', cfg.DATASET.AUGMENTATOR_val, cfg.DATASET.CROP)
         loader = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
-                         shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn)
+                         shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                         worker_init_fn=lambda x: random.seed())
 
     return loader
 
