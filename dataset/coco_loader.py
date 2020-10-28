@@ -433,7 +433,8 @@ class coco_base_(Dataset, data_loader.base):
     def get_bboxes(self, img, anns):
         
         labels = [self._get_bbox(a) for a in anns if (len(a['bbox']) > 0) and (int(a['category_id']) in self.map_catID.keys())]
-        labels = [ls for ls in labels if (ls[2] > 3.) and (ls[3] > 3.)]
+        #filter against the bbox size
+        labels = [ls for ls in labels if (ls[2] > 2.) or (ls[3] > 2.)]
         if len(labels) > 0:
             #ret = [x1, y1, w, h, id_cat]
             
@@ -444,6 +445,16 @@ class coco_base_(Dataset, data_loader.base):
                 augmented = self.transformer(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
             else:
                 augmented = dict(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
+
+            #filter against the bbox size
+            temp = [list(b) + [c] for b, c in zip(augmented["bboxes"], augmented["category_id"]) if (b[2] > 8.) or (b[3] > 8.)]
+            if len(temp) > 0:
+                temp = np.array(temp)
+                augmented["bboxes"] = temp[:, 0:4]
+                augmented["category_id"] = temp[:, 4]
+            else:
+                augmented = {"image":img, "bboxes":[], "category_id":[]}
+
             #https://github.com/aleju/imgaug
 
         else:
