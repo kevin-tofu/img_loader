@@ -447,7 +447,10 @@ class coco_base_(Dataset, data_loader.base):
                 augmented = dict(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
 
             #filter against the bbox size
-            temp = [list(b) + [c] for b, c in zip(augmented["bboxes"], augmented["category_id"]) if (b[2] > 8.) and (b[3] > 8.)]
+            #temp = [list(b) + [c] for b, c in zip(augmented["bboxes"], augmented["category_id"]) if (b[2] > 8.) and (b[3] > 8.)]
+            itr = enumerate(augmented["bboxes"])
+            index_temp = [i for i, b in itr if (b[2] > 8.) and (b[3] > 8.) and (b[0] >= 0.) and (b[1] >= 0.) and (b[0] + b[2] <= img.shape[1]) and (b[1] + b[3] <= img.shape[0])]
+            temp = [list(augmented["bboxes"][loop]) + [augmented["category_id"][loop]] for loop in index_temp]
             if len(temp) > 0:
                 temp = np.array(temp)
                 augmented["bboxes"] = temp[:, 0:4]
