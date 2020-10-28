@@ -674,7 +674,7 @@ class coco2017_(coco_base_specific_):
 class coco2014_(coco_base_specific_):
     name = 'coco2014'
     use = 'localization'
-    def __init__(self, cfg, data='train', transformer=None):
+    def __init__(self, cfg, data='train', transformer=None, cropped=True):
         self.year = "2014"
         super(coco2014_, self).__init__(cfg, data, transformer, name="2014", cropped=cropped)
 
@@ -721,8 +721,9 @@ def check_loader(cfg, coco, compose=None):
     #for batch_idx, data in enumerate(loader):
 
         print ("load and agument:{0}".format(time.time() - s) + "[sec]")
+        print(np.array(imgs).shape)
         #print(np.array(img).shape, np.array(target).shape)
-        for targets in targets_list:
+        for targets in targets_list[0]:
             for t in targets:
                 object_num[int(t[4])] += 1
         #print(target)
