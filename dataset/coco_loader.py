@@ -542,7 +542,7 @@ class coco_base_(Dataset, data_loader.base):
 
         data = self.get_annotation(img, anns)
         data["id_img"] = img_id
-        data["imsize"] = (img_shape.shape[1], img_shape.shape[0]) # width, height
+        data["imsize"] = (img_shape[1], img_shape[0]) # width, height
         #data["image"] = data["image"].tolist()
 
         return data
