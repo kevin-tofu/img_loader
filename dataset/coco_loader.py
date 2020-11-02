@@ -532,6 +532,7 @@ class coco_base_(Dataset, data_loader.base):
 
         else:
             img = io.imread(img_path)
+            img_shape = img.shape
             if img.ndim == 2:
                 img = np.expand_dims(img, 2)
                 img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3)) #(y, x, c)
@@ -541,7 +542,7 @@ class coco_base_(Dataset, data_loader.base):
 
         data = self.get_annotation(img, anns)
         data["id_img"] = img_id
-        data["imsize"] = (data["image"].shape[1], data["image"].shape[0]) # width, height
+        data["imsize"] = (img_shape.shape[1], img_shape.shape[0]) # width, height
         #data["image"] = data["image"].tolist()
 
         return data
