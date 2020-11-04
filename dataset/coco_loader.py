@@ -547,33 +547,6 @@ class coco_base_(Dataset, data_loader.base):
 
         return data
 
-    def _bbox_to_center_and_scale(self, bbox):
-        x, y, w, h = bbox
-
-        center = np.zeros(2, dtype=np.float32)
-        center[0] = x + w / 2.0
-        center[1] = y + h / 2.0
-
-        PIXEL_STD = 200
-        scale = np.array([w * 1.0 / PIXEL_STD, h * 1.0 / PIXEL_STD], dtype=np.float32)
-        
-        #TEST.X_EXTENTION = 0.01 * 9.0
-        #TEST.Y_EXTENTION = 0.015 * 9.0
-        test_x_ext = 0.01 * 9.0
-        test_y_ext = 0.015 * 9.0
-        scale[0] *= (1 + test_x_ext)
-        scale[1] *= (1 + test_y_ext)
-
-        #INPUT_SHAPE = (256, 192) # height, width
-        #OUTPUT_SHAPE = (64, 48)
-        #WIDTH_HEIGHT_RATIO = INPUT_SHAPE[1] / INPUT_SHAPE[0]
-        w_h_ratio = 256 / 192
-        if scale[0] > w_h_ratio * scale[1]:
-            scale[1] = scale[0] * 1.0 / w_h_ratio
-        else:
-            scale[0] = scale[1] * 1.0 * w_h_ratio
-
-        return center, scale
 
 
     def __getitem__ann_img(self, i):
@@ -645,6 +618,35 @@ class coco_base_(Dataset, data_loader.base):
                          "scale":None}
             
         return augmented
+
+
+    def _bbox_to_center_and_scale(self, bbox):
+        x, y, w, h = bbox
+
+        center = np.zeros(2, dtype=np.float32)
+        center[0] = x + w / 2.0
+        center[1] = y + h / 2.0
+
+        PIXEL_STD = 200
+        scale = np.array([w * 1.0 / PIXEL_STD, h * 1.0 / PIXEL_STD], dtype=np.float32)
+        
+        #TEST.X_EXTENTION = 0.01 * 9.0
+        #TEST.Y_EXTENTION = 0.015 * 9.0
+        test_x_ext = 0.01 * 9.0
+        test_y_ext = 0.015 * 9.0
+        scale[0] *= (1 + test_x_ext)
+        scale[1] *= (1 + test_y_ext)
+
+        #INPUT_SHAPE = (256, 192) # height, width
+        #OUTPUT_SHAPE = (64, 48)
+        #WIDTH_HEIGHT_RATIO = INPUT_SHAPE[1] / INPUT_SHAPE[0]
+        w_h_ratio = 256 / 192
+        if scale[0] > w_h_ratio * scale[1]:
+            scale[1] = scale[0] * 1.0 / w_h_ratio
+        else:
+            scale[0] = scale[1] * 1.0 * w_h_ratio
+
+        return center, scale
 
 
 class coco_base_specific_(coco_base_):
