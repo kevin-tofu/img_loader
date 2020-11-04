@@ -87,7 +87,7 @@ def func_vehicle_all(coco):
     __map_catID["id"] = "img"
     return __ret_img, __map_catID
 
-def func_person(coco):
+def func_keypoints(coco):
     __ret_ann = []
     __map_catID = {}
     
@@ -102,17 +102,17 @@ def func_person(coco):
 
 
 
-def func_person0(coco):
+def func_person(coco):
     __ret_img = []
     __map_catID = {}
-    
-    for aid, ann in coco.anns.items():
-        if ann['num_keypoints'] > 0:
-            __ret_img.append(ann['image_id'])
-
-    __ret_img_unique = np.unique(__ret_img)
+    nms = ["person"]
+    for _loop, cat in enumerate(nms):
+        catIds = coco.getCatIds(catNms=cat)
+        imgIds = coco.getImgIds(catIds=catIds)
+        __map_catID[int(catIds[-1])] = _loop
+        __ret_img += imgIds
     __map_catID["id"] = "img"
-    return __ret_img_unique, __map_catID
+    return __ret_img, __map_catID
 
 
 def draw_box(img, target, fmt="xywhc"):
@@ -196,7 +196,7 @@ def check_keypoints(cfg, coco, compose):
     operator.make_directory(path)
     cfg.ANNTYPE = 'keypoints'
     #cfg.IDS = 'all'
-    cfg.IDS = 'person'
+    cfg.IDS = 'keypoints'
 
     for dtype in ["val"]:
 
@@ -659,6 +659,7 @@ class coco_base_specific_(coco_base_):
         self.set_ids_function("vehicle", func_vehicle)
         self.set_ids_function("vehicle_all", func_vehicle_all)
         self.set_ids_function("person", func_person)
+        self.set_ids_function("keypoints", func_keypoints)
 
         
         self.ids_image_form = cfg.IDS #'all', ''
