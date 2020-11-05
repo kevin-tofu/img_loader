@@ -432,13 +432,15 @@ class coco_base_(Dataset, data_loader.base):
 
     def get_bboxes(self, img, anns):
         
+        for a in anns:
+            if a['iscrowd'] == 1:
+                print("iscrowd")
         labels = [self._get_bbox(a) for a in anns \
                   if (len(a['bbox']) > 0) and (a['iscrowd'] == 0) and (int(a['category_id']) in self.map_catID.keys())]
                   #if (len(a['bbox']) > 0)  and (int(a['category_id']) in self.map_catID.keys())]
 
-        #filter against the bbox size
-        labels = [ls for ls in labels if (ls[2] > 5.) and (ls[3] > 5.)]
         if len(labels) > 0:
+            labels = [ls for ls in labels if (ls[2] > 5.) and (ls[3] > 5.)]
             #ret = [x1, y1, w, h, id_cat]
             
             labels = np.array(labels)
