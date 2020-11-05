@@ -416,7 +416,6 @@ class coco_base_(Dataset, data_loader.base):
     @property
     def num_data(self):
         return len(self.ids)
-    
 
     def _get_bbox(self, ann):
 
@@ -429,7 +428,6 @@ class coco_base_(Dataset, data_loader.base):
 
         return [x1, y1, w, h, id_cat]
         
-
     def get_bboxes(self, img, anns):
         
         #for a in anns:
@@ -501,7 +499,6 @@ class coco_base_(Dataset, data_loader.base):
             else:
                 #augmented = {"image":img, "keypoints":joints}
                 augmented = {"image":img, "keypoints":joints}
-
             
         return augmented
 

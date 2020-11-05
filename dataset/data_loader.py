@@ -49,6 +49,12 @@ def collate_fn_keypoints(batch):
     return images, (targets, img_id, center, scale)
     #return images, targets
     
+def collate_fn_images(batch):
+    images = [b["image"] for b in batch if b["image"] is not None]
+    imsize = [b["imsize"] for b in batch if b["image"] is not None]
+    img_id = [b["id_img"] for b in batch if b["image"] is not None]
+
+    return images, (None, img_id, imsize)
 
 class base(object):
 
