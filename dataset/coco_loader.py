@@ -363,7 +363,7 @@ class coco_base_(Dataset, data_loader.base):
             self.get_annotation = self.get_bboxes
         elif self.anntype == 'keypoints':
             self.get_annotation = self.get_keypoints
-            self.cropped_coordinate = cropped
+        self.cropped_coordinate = cropped
 
     def initialize_loader(self):
         self.get_ids_image()
@@ -391,10 +391,10 @@ class coco_base_(Dataset, data_loader.base):
 
     def pycocoloader(self, cfg, data, name):
         
-        prefix = self.get_prefix(cfg.ANNTYPE)
+        prefix = self.get_prefix(cfg.ANNTYPE) #instances, person_keypoints, captions
         dataName = self.get_dataName(data, name) # train2014
         self.img_dir = self.data_dir + '/images/' + dataName + '/'
-        annfname = '%sannotations/%s_%s.json'%(self.data_dir, prefix, dataName)
+        annfname = '%sannotations/%s_%s.json'%(self.data_dir, prefix, dataName) #
         print(annfname)
         self.coco = COCO(annfname)
         #self.ids_img = []
@@ -547,8 +547,6 @@ class coco_base_(Dataset, data_loader.base):
 
         return data
 
-
-
     def __getitem__ann_img(self, i):
         #https://github.com/albumentations-team/albumentations_examples/blob/master/notebooks/example_keypoints.ipynb
 
@@ -619,36 +617,6 @@ class coco_base_(Dataset, data_loader.base):
             
         return augmented
 
-
-    def _bbox_to_center_and_scale(self, bbox):
-        x, y, w, h = bbox
-
-        center = np.zeros(2, dtype=np.float32)
-        center[0] = x + w / 2.0
-        center[1] = y + h / 2.0
-
-        PIXEL_STD = 200
-        scale = np.array([w * 1.0 / PIXEL_STD, h * 1.0 / PIXEL_STD], dtype=np.float32)
-        
-        #TEST.X_EXTENTION = 0.01 * 9.0
-        #TEST.Y_EXTENTION = 0.015 * 9.0
-        test_x_ext = 0.01 * 9.0
-        test_y_ext = 0.015 * 9.0
-        scale[0] *= (1 + test_x_ext)
-        scale[1] *= (1 + test_y_ext)
-
-        #INPUT_SHAPE = (256, 192) # height, width
-        #OUTPUT_SHAPE = (64, 48)
-        #WIDTH_HEIGHT_RATIO = INPUT_SHAPE[1] / INPUT_SHAPE[0]
-        w_h_ratio = 256 / 192
-        if scale[0] > w_h_ratio * scale[1]:
-            scale[1] = scale[0] * 1.0 / w_h_ratio
-        else:
-            scale[0] = scale[1] * 1.0 * w_h_ratio
-
-        return center, scale
-
-
 class coco_base_specific_(coco_base_):
 
     def __init__(self, cfg, data='train', transformer = None, name="2017", cropped=True):
@@ -701,14 +669,12 @@ class coco_base_specific_(coco_base_):
 
 class coco2017_(coco_base_specific_):
     name = 'coco2017'
-    use = 'localization'
     def __init__(self, cfg, data='train', transformer=None, cropped=True):
         self.year = "2017"
         super(coco2017_, self).__init__(cfg, data, transformer, name="2017", cropped=cropped)
 
 class coco2014_(coco_base_specific_):
     name = 'coco2014'
-    use = 'localization'
     def __init__(self, cfg, data='train', transformer=None, cropped=True):
         self.year = "2014"
         super(coco2014_, self).__init__(cfg, data, transformer, name="2014", cropped=cropped)
