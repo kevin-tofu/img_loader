@@ -437,11 +437,14 @@ class coco_base_(Dataset, data_loader.base):
         #        print("iscrowd")
 
         labels = [self._get_bbox(a) for a in anns \
-                  if (len(a['bbox']) > 0) and (a['iscrowd'] == 0) and (int(a['category_id']) in self.map_catID.keys())]
+                  if (len(a['bbox']) > 0) and (int(a['iscrowd']) == 0) and (int(a['category_id']) in self.map_catID.keys())]
                   #if (len(a['bbox']) > 0)  and (int(a['category_id']) in self.map_catID.keys())]
 
         if len(labels) > 0:
             labels = [ls for ls in labels if (ls[2] > 5.) and (ls[3] > 5.)]
+            
+        if len(labels) > 0:
+            
             #ret = [x1, y1, w, h, id_cat]
             
             labels = np.array(labels)
@@ -557,8 +560,11 @@ class coco_base_(Dataset, data_loader.base):
         #https://github.com/albumentations-team/albumentations_examples/blob/master/notebooks/example_keypoints.ipynb
 
         ann_id = self.ids[i][0]
+        anns = self.coco.loadAnns(ann_id)
+        if int(anns[0]['iscrowd']) != 0:
+            return {"image":None, "bboxes":[], "category_id":[], "keypoints":[]}
+
         img_id = self.ids[i][1]
-        
         img_name = self.coco.imgs[img_id]['file_name']
         img_path = self.img_dir + img_name
         if os.path.exists(img_path) == False:
@@ -570,7 +576,7 @@ class coco_base_(Dataset, data_loader.base):
                 img = np.expand_dims(img, 2)
                 img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3))
 
-        anns = self.coco.loadAnns(ann_id)
+        
         #center, scale = self._bbox_to_center_and_scale(anns[0]['bbox'])
 
         #bbox = anns[0]["bbox"]
@@ -589,14 +595,9 @@ class coco_base_(Dataset, data_loader.base):
         _x_max = int(min([np.max(joints_new[:, 0]) + ofs, img.shape[1]-1]))
         _y_max = int(min([np.max(joints_new[:, 1]) + ofs, img.shape[0]-1]))
 
-        #center = np.array([(_x_min + _x_max) / 2., (_y_min + _y_max) / 2.])
-        #x, y
         center = np.array([_x_min, _y_min])
         scale = np.array([(_x_max - _x_min), (_y_max - _y_min)]) 
-        #scale = np.array([(_x_max - _x_min) / 192., (_y_max - _y_min) / 256.]) 
-        #scale = np.array([(_x_max - _x_min) / 48., (_y_max - _y_min) / 64.])
 
-        #
         #print("self.cropped_coordinate : ", self.cropped_coordinate)
         if self.cropped_coordinate == True:
             crop = Compose([Crop(x_min=_x_min, y_min=_y_min, x_max=_x_max, y_max=_y_max, always_apply=True)],\
