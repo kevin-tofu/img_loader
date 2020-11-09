@@ -364,7 +364,8 @@ class coco_base_(Dataset, data_loader.base):
         elif self.anntype == 'keypoints':
             self.get_annotation = self.get_keypoints
         self.cropped_coordinate = cropped
-
+        self.iscrowd_exist = True
+        
     def initialize_loader(self):
         self.get_ids_image()
     
@@ -430,12 +431,12 @@ class coco_base_(Dataset, data_loader.base):
         
     def get_bboxes(self, img, anns):
         
-        #for a in anns:
-        #    if a['iscrowd'] == 1:
-        #        print("iscrowd")
-
-        labels = [self._get_bbox(a) for a in anns \
-                  if (len(a['bbox']) > 0) and (int(a['iscrowd']) == 0) and (int(a['category_id']) in self.map_catID.keys())]
+        if self.iscrowd_exist == True:
+            labels = [self._get_bbox(a) for a in anns \
+                    if (len(a['bbox']) > 0) and (int(a['iscrowd']) == 0) and (int(a['category_id']) in self.map_catID.keys())]
+        else:
+            labels = [self._get_bbox(a) for a in anns \
+                    if (len(a['bbox']) > 0) and (int(a['category_id']) in self.map_catID.keys())]
                   #if (len(a['bbox']) > 0)  and (int(a['category_id']) in self.map_catID.keys())]
 
         if len(labels) > 0:
@@ -443,10 +444,7 @@ class coco_base_(Dataset, data_loader.base):
             
         if len(labels) > 0:
             
-            #ret = [x1, y1, w, h, id_cat]
-            
             labels = np.array(labels)
-            
             #labels[:, 2:4] = np.clip(labels[:, 2:4], 0.1, 416 - 0.1)
             if self.transformer is not None:
                 augmented = self.transformer(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
@@ -467,8 +465,6 @@ class coco_base_(Dataset, data_loader.base):
             else:
                 augmented = {"image":img, "bboxes":[], "category_id":[]}
 
-            #https://github.com/aleju/imgaug
-
         else:
             #print("no labels")
             augmented = {"image":img, "bboxes":[], "category_id":[]}
@@ -477,17 +473,11 @@ class coco_base_(Dataset, data_loader.base):
 
     def get_keypoints(self, img, anns):
         
-        #print(anns)
         if len(anns) == 0:
             augmented = {"image":img, "keypoints":[], "category_id":[]}
 
         else:
-            #joints = [np.array(a['keypoints']).reshape((-1, 3)) for a in anns]
             joints = [np.array(a['keypoints']).reshape((-1, 3)) for a in anns if np.sum(np.array(a['keypoints'])) != 0]
-            
-            #center, scale = self._bbox_to_center_and_scale(bbox)
-            #center = d['center']
-            #scale = d['scale']
 
             #joints = np.array(anns['keypoints']).reshape((-1, 3))
             #joints_vis = joints[:, -1].reshape((-1, 1))
@@ -502,18 +492,6 @@ class coco_base_(Dataset, data_loader.base):
             
         return augmented
 
-    def _bbox_to_center_and_scale(self, bbox):
-        x, y, w, h = bbox
-
-        center = np.zeros(2, dtype=np.float32)
-        center[0] = x + w / 2.0
-        center[1] = y + h / 2.0
-
-        #scale = np.array([w * 1.0 / self.pixel_std, h * 1.0 / self.pixel_std],
-        #        dtype=np.float32)
-
-        #return center, scale
-
     def __getitem__(self, i):
 
         if self.map_catID["id"] == "img":
@@ -524,11 +502,6 @@ class coco_base_(Dataset, data_loader.base):
 
         
     def __getitem__img(self, i):
-
-        #if self.map_catID["id"] == "img":
-        #if self.map_catID["id"] == "ann":
-        #if self.map_catID["id"] == "ann+img":
-        #    img_id = self.ids[i][1]
 
         img_id = self.ids[i]
         img_name = self.coco.imgs[img_id]['file_name']
