@@ -73,7 +73,6 @@ def func_vehicle(coco):
     __map_catID["id"] = "img"
     return __ret_img, __map_catID
 
-
 def func_vehicle_all(coco):
     __ret_img = []
     __map_catID = {}
@@ -365,7 +364,7 @@ class coco_base_(Dataset, data_loader.base):
             self.get_annotation = self.get_keypoints
         self.cropped_coordinate = cropped
         self.iscrowd_exist = True
-        
+
     def initialize_loader(self):
         self.get_ids_image()
     
@@ -437,7 +436,6 @@ class coco_base_(Dataset, data_loader.base):
         else:
             labels = [self._get_bbox(a) for a in anns \
                     if (len(a['bbox']) > 0) and (int(a['category_id']) in self.map_catID.keys())]
-                  #if (len(a['bbox']) > 0)  and (int(a['category_id']) in self.map_catID.keys())]
 
         if len(labels) > 0:
             labels = [ls for ls in labels if (ls[2] > 5.) and (ls[3] > 5.)]
@@ -445,7 +443,6 @@ class coco_base_(Dataset, data_loader.base):
         if len(labels) > 0:
             
             labels = np.array(labels)
-            #labels[:, 2:4] = np.clip(labels[:, 2:4], 0.1, 416 - 0.1)
             if self.transformer is not None:
                 augmented = self.transformer(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
             else:
@@ -500,7 +497,21 @@ class coco_base_(Dataset, data_loader.base):
         elif self.map_catID["id"] == "ann+img":
             return self.__getitem__ann_img(i)
 
-        
+    def get_img(self, img_id):
+        #img_id = self.coco.getImgIds(imgIds=_id)
+        #img_id = self.ids[_id]
+        img_name = self.coco.imgs[img_id]['file_name']
+        img_path = self.img_dir + img_name
+        if os.path.exists(img_path) == False:
+            return None
+        else:
+            img = io.imread(img_path)
+            img_shape = img.shape
+            if img.ndim == 2:
+                img = np.expand_dims(img, 2)
+                img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3)) #(y, x, c)
+            return img
+
     def __getitem__img(self, i):
 
         img_id = self.ids[i]
@@ -556,10 +567,9 @@ class coco_base_(Dataset, data_loader.base):
         joints_new = joints[joints[:, 2] > 0]
 
         # going to crop images so that ALL keypoints is on cropped image
+        ofs = 5
+        #ofs = 10
         #ofs = 20
-        ofs = 30
-        #ofs = 40
-        #ofs = 80
         _x_min = int(max([np.min(joints_new[:, 0]) - ofs, 0]))
         _y_min = int(max([np.min(joints_new[:, 1]) - ofs, 0]))
         _x_max = int(min([np.max(joints_new[:, 0]) + ofs, img.shape[1]-1]))
