@@ -9,6 +9,14 @@ from dataset import data_loader
 import time
 
 
+def func_coco2mpii(joints, __map):
+
+    #(N, xycn)
+    joints_new = [[j[0], j[1], j[2], __map[j[3]]] for j in joints]
+    joints_new = sorted(joints_new, reverse=False, key=lambda x: x[3]) 
+    return joints_new
+
+
 def func_all(coco):
     __ret_img = []
     __map_catID = {}
@@ -38,6 +46,21 @@ def func_commercial(coco):
     __map_catID["id"] = "img"
     return __ret_img, __map_catID
     
+
+def func_keypoints_commercial(coco):
+    __ret_ann = []
+    __map_catID = {}
+    
+    for aid, ann in coco.anns.items():
+        if ann['num_keypoints'] > 0:
+            id_license = coco.imgs[ann['image_id']]['license']
+            if id_license >= 4:
+                __ret_ann.append([aid, ann['image_id']])
+
+    __map_catID["id"] = "ann+img"
+    return __ret_ann, __map_catID
+
+
 def func_custom1(coco):
     __ret_img = []
     __map_catID = {}
@@ -365,6 +388,10 @@ class coco_base_(Dataset, data_loader.base):
         self.cropped_coordinate = cropped
         self.iscrowd_exist = True
 
+        self.fmt_bbox = "COCO"
+        self.fmt_keypoint = "COCO"
+        self.cvt_keypoint_coco2mpii = []
+
     def initialize_loader(self):
         self.get_ids_image()
     
@@ -527,7 +554,8 @@ class coco_base_(Dataset, data_loader.base):
                 img = np.expand_dims(img, 2)
                 img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3)) #(y, x, c)
             
-        ann_ids = self.coco.getAnnIds(imgIds=img_id)
+        #ann_ids = self.coco.getAnnIds(imgIds=img_id)
+        ann_ids = self.coco.getAnnIds(imgIds=img_id, iscrowd=False)
         anns = self.coco.loadAnns(ann_ids)
 
         data = self.get_annotation(img, anns)
@@ -542,8 +570,9 @@ class coco_base_(Dataset, data_loader.base):
 
         ann_id = self.ids[i][0]
         anns = self.coco.loadAnns(ann_id)
-        if int(anns[0]['iscrowd']) != 0:
-            return {"image":None, "bboxes":[], "category_id":[], "keypoints":[]}
+        if self.iscrowd_exist == True:
+            if int(anns[0]['iscrowd']) != 0:
+                return {"image":None, "bboxes":[], "category_id":[], "keypoints":[]}
 
         img_id = self.ids[i][1]
         img_name = self.coco.imgs[img_id]['file_name']
@@ -566,9 +595,12 @@ class coco_base_(Dataset, data_loader.base):
         joints = np.concatenate((joints, joints_num), axis = 1)
         joints_new = joints[joints[:, 2] > 0]
 
+        if self.fmt_keypoint == "MPII":
+            joints_new = func_coco2mpii(joints_new, self.cvt_keypoint_coco2mpii)
+
         # going to crop images so that ALL keypoints is on cropped image
-        ofs = 5
-        #ofs = 10
+        #ofs = 5
+        ofs = 10
         #ofs = 20
         _x_min = int(max([np.min(joints_new[:, 0]) - ofs, 0]))
         _y_min = int(max([np.min(joints_new[:, 1]) - ofs, 0]))
@@ -617,6 +649,8 @@ class coco_base_specific_(coco_base_):
         self.set_ids_function("vehicle_all", func_vehicle_all)
         self.set_ids_function("person", func_person)
         self.set_ids_function("keypoints", func_keypoints)
+        self.set_ids_function("keypoints_commercial", func_keypoints_commercial)
+        
 
         
         self.ids_image_form = cfg.IDS #'all', ''

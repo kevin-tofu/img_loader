@@ -53,8 +53,16 @@ def collate_fn_images(batch):
     images = [b["image"] for b in batch if b["image"] is not None]
     imsize = [b["imsize"] for b in batch if b["image"] is not None]
     img_id = [b["id_img"] for b in batch if b["image"] is not None]
-
     return images, (None, img_id, imsize)
+
+def collate_fn_images_sub(batch):
+    images = [b["image"] for b in batch if b["image"] is not None]
+    imsize = [b["imsize"] for b in batch if b["image"] is not None]
+    img_id = [b["id_img"] for b in batch if b["image"] is not None]
+    img_fname = [b["img_fname"] for b in batch if b["image"] is not None]
+    #img_path = [b["img_path"] for b in batch if b["image"] is not None]
+    return images, (None, img_id, imsize, img_fname)
+
 
 class base(object):
 
