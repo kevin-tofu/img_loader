@@ -10,7 +10,7 @@ The images are comming from Flicker, and Licenses are all different based on eac
 
 !! The caution is that it includes over-lapped annotations.
 
-## Licences on COCO images
+## Licenses on COCO images
 
   1. Attribution-NonCommercial-ShareAlike License  
      http://creativecommons.org/licenses/by-nc-sa/2.0/
