@@ -540,7 +540,8 @@ class coco_base_(Dataset, data_loader.base):
             return img
 
     def __getitem__img(self, i):
-
+        """
+        """
         img_id = self.ids[i]
         img_name = self.coco.imgs[img_id]['file_name']
         img_path = self.img_dir + img_name
@@ -566,8 +567,10 @@ class coco_base_(Dataset, data_loader.base):
         return data
 
     def __getitem__ann_img(self, i):
+        """
         #https://github.com/albumentations-team/albumentations_examples/blob/master/notebooks/example_keypoints.ipynb
-
+        """
+        
         ann_id = self.ids[i][0]
         anns = self.coco.loadAnns(ann_id)
         if self.iscrowd_exist == True:
@@ -636,6 +639,8 @@ class coco_base_(Dataset, data_loader.base):
             
         return augmented
 
+
+
 class coco_base_specific_(coco_base_):
 
     def __init__(self, cfg, data='train', transformer = None, name="2017", cropped=True):
@@ -650,9 +655,6 @@ class coco_base_specific_(coco_base_):
         self.set_ids_function("person", func_person)
         self.set_ids_function("keypoints", func_keypoints)
         self.set_ids_function("keypoints_commercial", func_keypoints_commercial)
-        
-
-        
         self.ids_image_form = cfg.IDS #'all', ''
         self.initialize_loader()
 
@@ -699,6 +701,12 @@ class coco2014_(coco_base_specific_):
     def __init__(self, cfg, data='train', transformer=None, cropped=True):
         self.year = "2014"
         super(coco2014_, self).__init__(cfg, data, transformer, name="2014", cropped=cropped)
+
+class coco_original(coco_base_specific_):
+    name = 'original'
+    def __init__(self, cfg, original_name, data='train', transformer=None, cropped=True):
+        self.year = original_name
+        super(coco_original, self).__init__(cfg, data, transformer, name=original_name, cropped=cropped)
 
 
 def x1y1wh_to_xywh(label):
