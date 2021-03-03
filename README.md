@@ -12,17 +12,24 @@ The feature of this repository is that
 
 ## Requirement
 * pycocotools
-* albumentations
 * numpy
 * scikit-image
+
+### Sub-tools
+* albumentations
+
 
 ## Installation
 ### Install libraries to conda environment
 ```
 conda install -c conda-forge pycocotools
-conda install -c conda-forge albumentations
 conda install -c conda-forge numpy
 conda install -c conda-forge scikit-image
+```
+
+### Install sub-tools
+```
+conda install -c conda-forge albumentations
 ```
 
 ### Clone repository
@@ -59,7 +66,7 @@ directory (COCO****)
  
 ```
 
-## collate functions for aggregating information.
+## Collate functions for aggregating information.
 It is heavy task to load inforamtion such as many images or vidoes.
 So, Some dataloaders like tensorflow or Torch have funcation which is going to load information by multi-processing on CPU.
 Users indicates how many works to use for loading, and avoid this part becomes bottle-neck on processes.
