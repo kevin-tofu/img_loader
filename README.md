@@ -190,3 +190,38 @@ python img_loader/dataset/coco_loader.py keypoints path2COCO
 
 * check bbox  
 python img_loader/dataset/coco_loader.py bbox path2COCO
+
+
+### How to use data augmentator.
+There are 3 augmentator on this repository.
+
+This is for albumentation library.
+  aug_bbox, aug_keypoints, aug_keypoints_flipped
+
+aug_keypoints_flipped is going to make flip keypoints based on human keypoint.
+If you flip an image with keypoint, right keypoint should move to left keypoint. 
+For example, left elbow -> right elbow. right elbow -> left knee.
+aug_keypoints_flipped will do this operation.
+
+#### Interface for albumentation
+```
+from albumentations import Compose
+from albumentations.augmentations.transforms import HorizontalFlip, Blur, Normalize
+
+def f_augmentation1(image_height, image_width):
+  return Compose([HorizontalFlip(p=0.5), Blur(p=0.2), Normalize(always_apply=True), \
+                  bbox_params={'format':fmt, 'label_fields':['category_id']})
+
+def f_augmentation2(image_height, image_width):
+    return Compose([HorizontalFlip(p=0.5), Blur(p=0.2)], \
+                    keypoint_params=A.KeypointParams(format='xy'))
+
+augmentator_bbox = aug_bbox(f_augmentation1)
+augmentator_kpoint1 = aug_keypoints(f_augmentation2)
+augmentator_kpoint2 = aug_keypoints_flipped(f_augmentation2, p = 1.0)
+
+
+```
+
+
+

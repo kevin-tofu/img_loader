@@ -268,7 +268,6 @@ class aug_bbox(object):
     def __call__(self, image, bboxes, category_id):
         
         compose = self.compose_func(image.shape[0], image.shape[1])
-        #compose = self.compose_func(len(image), len(image[0]))
         img_augmented = compose(image=image, bboxes=bboxes, category_id=category_id)
 
         return img_augmented
