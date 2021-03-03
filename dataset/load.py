@@ -2,7 +2,7 @@
 #import sys
 #sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 #from dataset import chair_renderer, chair_renderer2, coco_loader
-from img_loader.dataset import chair_renderer, coco_loader
+from img_loader.dataset import chair_renderer, coco_loader, cricket_loader
 from torch.utils.data import DataLoader
 #from utils.utils import *
 #from utils.parse_config import *
@@ -41,7 +41,6 @@ def get_train(cfg):
 
     if cfg.DATASET.NAME == 'COCO2017':
         print('COCO 2017 ')
-        #train = coco_loader.coco2017(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
         data_ = coco_loader.coco2017_(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
         train = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
                             shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
@@ -54,6 +53,15 @@ def get_train(cfg):
                          shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                          worker_init_fn=lambda x: random.seed())
     
+    elif cfg.DATASET.NAME == 'cocoCricket':
+        print('cocoCricket')
+        data_ = cricket_loader.cocoCricket(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
+        train = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
+                            shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                            worker_init_fn=lambda x: random.seed())
+    else:
+        val = None
+
     return train
 
 
@@ -74,7 +82,18 @@ def get_val(cfg):
         val = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
                          shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                          worker_init_fn=lambda x: random.seed())
-    
+
+    elif cfg.DATASET.NAME == 'cocoCricket':
+        print('cocoCricket')
+        data_ = cricket_loader.cocoCricket(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
+        #data_ = cricket_loader.cocoCricket(cfg.DATASET, 'val', cfg.DATASET.AUGMENTATOR)
+        val = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
+                         shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                         worker_init_fn=lambda x: random.seed())
+    else:
+        #return NotImplementedError()
+        val = None
+
     return val
 
 
@@ -99,6 +118,17 @@ def get_test(cfg):
         loader = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
                          shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                          worker_init_fn=lambda x: random.seed())
+
+    elif cfg.DATASET.NAME == 'cocoCricket':
+        print('cocoCricket')
+        data_ = cricket_loader.cocoCricket(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
+        loader = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
+                         shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                         worker_init_fn=lambda x: random.seed())
+    else:
+        #return NotImplementedError()
+        loader = None
+
 
     return loader
 
