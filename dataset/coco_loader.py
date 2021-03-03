@@ -382,8 +382,11 @@ class coco_base_(Dataset, data_loader.base):
         Dataset.__init__(self)
 
         if self.anntype == 'bbox':
+            print("get_bboxes")
             self.get_annotation = self.get_bboxes
+            
         elif self.anntype == 'keypoints':
+            print("get_keypoints")
             self.get_annotation = self.get_keypoints
         self.cropped_coordinate = cropped
         self.iscrowd_exist = True
@@ -457,6 +460,9 @@ class coco_base_(Dataset, data_loader.base):
         
     def get_bboxes(self, img, anns):
         
+        #for a in anns:
+        #    print(a['category_id'])
+
         if self.iscrowd_exist == True:
             labels = [self._get_bbox(a) for a in anns \
                     if (len(a['bbox']) > 0) and (int(a['iscrowd']) == 0) and (int(a['category_id']) in self.map_catID.keys())]
@@ -517,7 +523,8 @@ class coco_base_(Dataset, data_loader.base):
         return augmented
 
     def __getitem__(self, i):
-
+        
+        #print(i)
         if self.map_catID["id"] == "img":
             return self.__getitem__img(i)
 
@@ -545,12 +552,15 @@ class coco_base_(Dataset, data_loader.base):
         img_id = self.ids[i]
         img_name = self.coco.imgs[img_id]['file_name']
         img_path = self.img_dir + img_name
+
+        #print(img_id, img_name, img_path)
         if os.path.exists(img_path) == False:
             return {"image":None, "bboxes":[], "category_id":[], "keypoints":[]}
 
         else:
             img = io.imread(img_path)
             img_shape = img.shape
+            #print(img_shape)
             if img.ndim == 2:
                 img = np.expand_dims(img, 2)
                 img = np.broadcast_to(img, (img.shape[0], img.shape[1], 3)) #(y, x, c)
@@ -558,6 +568,7 @@ class coco_base_(Dataset, data_loader.base):
         #ann_ids = self.coco.getAnnIds(imgIds=img_id)
         ann_ids = self.coco.getAnnIds(imgIds=img_id, iscrowd=False)
         anns = self.coco.loadAnns(ann_ids)
+        #print(ann_ids)
 
         data = self.get_annotation(img, anns)
         data["id_img"] = img_id
@@ -714,15 +725,6 @@ def x1y1wh_to_xywh(label):
     ret[:, 0:2] += ret[:, 2:4] / 2.
     return ret
 
-#def collate_fn(batch):
-
-#    images = [b["image"] for b in batch if len(b["bboxes"]) > 0]
-#    x1y1wh_trans = [b["bboxes"] for b in batch if len(b["bboxes"]) > 0]
-#    id_trans = [b["category_id"] for b in batch if len(b["bboxes"]) > 0]
-#    targets = [np.concatenate([x1y1wh_to_xywh(_x1y1wh), np.array(_id)[:, np.newaxis]], axis = 1) for _x1y1wh, _id in zip(x1y1wh_trans, id_trans)]
-#    return images, targets
-
-
 def check_loader(cfg, coco, compose=None):
     
     print("Check coco dataloader")
@@ -834,7 +836,7 @@ def plot_num_dataset(path, data_type, object_num, content):
     plt.savefig(path + "data_"  + data_type  + ".png")
     # 2, 16, 21
     # 2, 16, 21
-    
+
 if __name__ == '__main__':
 
     print("start")

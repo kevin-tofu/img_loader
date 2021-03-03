@@ -1,10 +1,13 @@
+
 # Image loader Interface
 This repository is a dataloader that outputs annotations for Machine Learning purpose.  
 The feature of this repository is that  
-* images and its annotation that is written in COCO format can be loaded easily
-* can make data augmentation if you give data augmentation function.  
-  (Now, Only libraly that can be used is albumentations [ https://github.com/albumentations-team/albumentations ].)  
-* can get annotations in several formats if you change a parameter.
+* export images and its annotation that is written in COCO format. It can be loaded easily for deep learning process
+* support bbox and keypoint annotation.
+* can make data augmentation if you give data augmentation function to loader class.  
+  Now, external libraly (like albumentations) can be applied. 
+   - https://github.com/albumentations-team/albumentations
+* can get annotations in several formats if you change parameters.
 
 
 ## Requirement
@@ -56,6 +59,23 @@ directory (COCO****)
  
 ```
 
+## collate functions for aggregating information.
+It is heavy task to load inforamtion such as many images or vidoes.
+So, Some dataloaders like tensorflow or Torch have funcation which is going to load information by multi-processing on CPU.
+Users indicates how many works to use for loading, and avoid this part becomes bottle-neck on processes.
+For using this function, users need to give a collate function to dataloader.
+The collate function is going to aggregate information that is loaded by each workers on multi-processing.
+ This repository gives you some collate function choices.
+
+
+|Collate functions|Explanations|
+|:---:|:---|
+|collate_fn_bbox| returns [images, (bbox, img_id, imsize)].|
+|collate_fn_keypoints| returns [images, (keypoints, img_id, center, scale)] <br> center means center coordinate of bbox, and scale means bbox scale.|
+|collate_fn_images| returns [(None, img_id, imsize)] <br>it will be used for dataset without annotation.|
+|collate_fn_images_sub| returns [(None, img_id, imsize, img_fname)]|
+
+
 ## Usage of coco_loader.py
 This class loads mini-batches that includes images with annotations from COCO format dataset.  
 Data augmentation will be done by library albumentation.  
@@ -81,7 +101,25 @@ tf = Compose([Resize(h, w, p=1.0)],\
 dataloader = coco_specific(cfg, "train", tf, "2017")
 imgs, annotations, dataloader.__next__()
 
+
 ```
+
+### Ex. How to load images using Dataloader in pytorch.
+```
+from dataset import data_loader
+from torch.utils.data import DataLoader, Dataset
+data_ = coco_specific(cfg, 'train', tf, "2017")
+data_.initialize_loader()
+loader = DataLoader(data_, batch_size=cfg.BATCHSIZE,
+                    shuffle=False, num_workers=5, collate_fn = data_loader.collate_fn_bbox)
+
+for batch_idx, (imgs, targets_list) in enumerate(loader):
+      print(np.array(imgs).shape)
+      for targets in targets_list[0]:
+          print(np.array(targets).shape)
+
+```
+
 
 ### How to convert data format.
 
