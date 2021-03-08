@@ -200,8 +200,11 @@ This is for albumentation library.
 
 aug_keypoints_flipped is going to make flip keypoints based on human keypoint.
 If you flip an image with keypoint, right keypoint should move to left keypoint. 
+
 For example, left elbow -> right elbow. right elbow -> left knee.
-aug_keypoints_flipped will do this operation.
+But, albumentation will not do this sort of opearations.
+So, aug_keypoints_flipped will do this operation instead of albumentation.
+
 
 #### Interface for albumentation
 ```

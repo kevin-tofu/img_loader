@@ -421,12 +421,12 @@ class coco_base_(Dataset, data_loader.base):
 
     def pycocoloader(self, cfg, data, name):
         
-        prefix = self.get_prefix(cfg.ANNTYPE) #instances, person_keypoints, captions
-        dataName = self.get_dataName(data, name) # train2014
-        self.img_dir = self.data_dir + '/images/' + dataName + '/'
-        annfname = '%sannotations/%s_%s.json'%(self.data_dir, prefix, dataName) #
-        print(annfname)
-        self.coco = COCO(annfname)
+        self.prefix = self.get_prefix(cfg.ANNTYPE) #instances, person_keypoints, captions
+        self.dataName = self.get_dataName(data, name) # train2014
+        self.img_dir = self.data_dir + '/images/' + self.dataName + '/'
+        self.annfname = '%sannotations/%s_%s.json'%(self.data_dir, self.prefix, self.dataName) #
+        print(self.annfname)
+        self.coco = COCO(self.annfname)
         #self.ids_img = []
         self.ids = []
         self.map_catID = {}
