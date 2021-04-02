@@ -53,7 +53,7 @@ def get_train(cfg):
                          shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                          worker_init_fn=lambda x: random.seed())
     
-    elif cfg.DATASET.NAME == 'cocoCricket':
+    elif cfg.DATASET.NAME == 'cocoCricket' or cfg.DATASET.NAME == 'cocoCricket_sep':
         print('cocoCricket')
         data_ = cricket_loader.cocoCricket(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
         train = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
@@ -121,10 +121,11 @@ def get_test(cfg):
 
     elif cfg.DATASET.NAME == 'cocoCricket':
         print('cocoCricket')
-        data_ = cricket_loader.cocoCricket(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
+        data_ = cricket_loader.cocoCricket(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR_test)
         loader = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
                          shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                          worker_init_fn=lambda x: random.seed())
+
     else:
         #return NotImplementedError()
         loader = None

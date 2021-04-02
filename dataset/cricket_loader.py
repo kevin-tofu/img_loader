@@ -117,9 +117,5 @@ if __name__ == '__main__':
 
     elif sys.argv[1] == "cocoapi":
         check_cocoapi(cfg, coco, compose, year)
-    #check_licence(cfg, coco, compose)
-    #check_annotations(cfg, coco, compose, year)
-   
-
 
     print("end")
