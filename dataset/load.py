@@ -85,7 +85,7 @@ def get_val(cfg):
 
     elif cfg.DATASET.NAME == 'cocoCricket':
         print('cocoCricket')
-        data_ = cricket_loader.cocoCricket(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
+        data_ = cricket_loader.cocoCricket(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR_val)
         #data_ = cricket_loader.cocoCricket(cfg.DATASET, 'val', cfg.DATASET.AUGMENTATOR)
         val = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
                          shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
