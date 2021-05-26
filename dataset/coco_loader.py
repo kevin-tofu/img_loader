@@ -30,6 +30,24 @@ def func_all(coco):
     __map_catID["id"] = "img"
     return __ret_img, __map_catID
     
+
+def func_all_pattern1(coco):
+    __ret_img = []
+    __map_catID = {}
+    __ret_img = coco.getImgIds()
+    cats = coco.loadCats(coco.getCatIds())
+
+    #nms = [cat['name'] for cat in cats]
+    nms = ["person", "car", "bus"]
+    
+    for _loop, cat in enumerate(nms):
+        catIds = coco.getCatIds(catNms=cat)
+         __map_catID[int(catIds[-1])] = _loop
+
+    __map_catID["id"] = "img"
+    return __ret_img, __map_catID
+
+
 def func_commercial(coco):
     __ret_img = []
     __map_catID = {}
@@ -121,7 +139,6 @@ def func_keypoints(coco):
 
     __map_catID["id"] = "ann+img"
     return __ret_ann, __map_catID
-
 
 
 def func_person(coco):
@@ -466,6 +483,7 @@ class coco_base_(Dataset, data_loader.base):
         if self.iscrowd_exist == True:
             labels = [self._get_bbox(a) for a in anns \
                     if (len(a['bbox']) > 0) and (int(a['iscrowd']) == 0) and (int(a['category_id']) in self.map_catID.keys())]
+
         else:
             labels = [self._get_bbox(a) for a in anns \
                     if (len(a['bbox']) > 0) and (int(a['category_id']) in self.map_catID.keys())]
@@ -660,6 +678,8 @@ class coco_base_specific_(coco_base_):
         self.ids_funcs = {}
         self.set_ids_function("all", func_all)
         self.set_ids_function("commercial", func_commercial)
+        self.set_ids_function("all_pattern1", func_all_pattern1)
+        
         self.set_ids_function("custom1", func_custom1)
         self.set_ids_function("vehicle", func_vehicle)
         self.set_ids_function("vehicle_all", func_vehicle_all)
