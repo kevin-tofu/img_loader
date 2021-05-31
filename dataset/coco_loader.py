@@ -472,7 +472,7 @@ class coco_base_(Dataset, data_loader.base):
         y1 = float(ann['bbox'][1])
         w = float(ann['bbox'][2])
         #h = float(ann['bbox'][3])
-        h = float(ann['bbox'][3] * 1.1)
+        h = float(ann['bbox'][3] * 1.2)
         h = h if (y1 + h) < h_img - 1 else float(h_img - y1 - 1)
 
         id_cat = self.map_catID[int(ann['category_id'])]
