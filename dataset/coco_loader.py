@@ -464,6 +464,7 @@ class coco_base_(Dataset, data_loader.base):
     def num_data(self):
         return len(self.ids)
 
+
     def _get_bbox(self, ann, h_img, w_img):
 
         #xywh (x_center, y_center, width, height)
@@ -472,7 +473,7 @@ class coco_base_(Dataset, data_loader.base):
         w = float(ann['bbox'][2])
         #h = float(ann['bbox'][3])
         h = float(ann['bbox'][3] * 1.1)
-        h = h if h < h_img - 1 else float(h_img - 1)
+        h = h if (y1 + h) < h_img - 1 else float(h_img - y1 - 1)
 
         id_cat = self.map_catID[int(ann['category_id'])]
 
@@ -491,7 +492,6 @@ class coco_base_(Dataset, data_loader.base):
         else:
             labels = [self._get_bbox(a, img.shape[0], img.shape[1]) for a in anns \
                     if (len(a['bbox']) > 0) and (int(a['category_id']) in self.map_catID.keys())]
-
 
 
         if len(labels) > 0:
