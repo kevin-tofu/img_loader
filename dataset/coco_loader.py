@@ -42,7 +42,7 @@ def func_all_pattern1(coco):
     
     for _loop, cat in enumerate(nms):
         catIds = coco.getCatIds(catNms=cat)
-         __map_catID[int(catIds[-1])] = _loop
+        __map_catID[int(catIds[-1])] = _loop
 
     __map_catID["id"] = "img"
     return __ret_img, __map_catID
