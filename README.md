@@ -100,16 +100,19 @@ from albumentations.augmentations.transforms import Resize
 cfg = edict()
 cfg.PATH = '/data/public_data/COCO2017/'
 cfg.ANNTYPE = 'bbox'
+#cfg.ANNTYPE = 'keypoint'
 cfg.BATCHSIZE = 32
 h, w = 416, 416
 tf = Compose([Resize(h, w, p=1.0)],\
               bbox_params={'format':'coco', 'label_fields':['category_id']})
 
-dataloader = coco_specific(cfg, "train", tf, "2017")
-imgs, annotations, dataloader.__next__()
+sampler = coco_specific(cfg, "train", tf, "2017")
 
 
 ```
+
+
+
 
 ### Ex. How to load images using Dataloader in pytorch.
 ```
@@ -124,6 +127,43 @@ for batch_idx, (imgs, targets_list) in enumerate(loader):
       print(np.array(imgs).shape)
       for targets in targets_list[0]:
           print(np.array(targets).shape)
+
+```
+                 
+
+```
+cfg = edict()
+cfg.PATH = '/data/public_data/COCO2017/'
+cfg.BATCHSIZE = 32
+cfg.IDS = 'person'
+tf = None
+
+cfg.ANNTYPE = 'bbox'
+sampler = coco_loader.coco2017_(cfg, 'train', tf)
+train_loader = DataLoader(sampler, batch_size=cfg.BATCHSIZE,\
+                          shuffle=True, num_workers=3, collate_fn=sampler.collate_fn,
+                          worker_init_fn=lambda x: random.seed())
+
+imgs, annotations = iter(train_loader).__next__()
+targets, img_id, imsize = annotation
+
+```
+
+```
+cfg = edict()
+cfg.PATH = '/data/public_data/COCO2017/'
+cfg.BATCHSIZE = 32
+cfg.IDS = 'keypoints'
+tf = None
+
+cfg.ANNTYPE = 'keypoints'
+sampler = coco_loader.coco2017_(cfg, 'train', tf)
+train_loader = DataLoader(sampler, batch_size=cfg.BATCHSIZE,\
+                          shuffle=True, num_workers=3, collate_fn=sampler.collate_fn,
+                          worker_init_fn=lambda x: random.seed())
+
+imgs, annotations = iter(train_loader).__next__()
+targets, img_id, center, scale = annotation
 
 ```
 

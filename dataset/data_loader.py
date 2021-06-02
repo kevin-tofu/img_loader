@@ -37,6 +37,18 @@ def collate_fn_bbox(batch):
     return images, (targets, img_id, imsize)
 
 
+def collate_fn_bbox_x1y1wh(batch):
+    images = [b["image"] for b in batch if len(b["bboxes"]) > 0]
+    x1y1wh = [b["bboxes"] for b in batch if len(b["bboxes"]) > 0]
+    id_trans = [b["category_id"] for b in batch if len(b["bboxes"]) > 0]
+
+    targets = [np.concatenate([x1y1wh_loop, np.array(_id)[:, np.newaxis]], axis = 1) for x1y1wh_loop, _id in zip(x1y1wh, id_trans)]
+    img_id = [b["id_img"] for b in batch if len(b["bboxes"]) > 0]
+    imsize = [b["imsize"] for b in batch if len(b["bboxes"]) > 0]
+    
+    return images, (targets, img_id, imsize)
+
+
 def collate_fn_keypoints(batch):
 
     # remove data without keypoints
