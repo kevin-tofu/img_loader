@@ -407,10 +407,11 @@ class coco_base_(Dataset, data_loader.base):
         
         self.anntype = cfg.ANNTYPE
         self.__data = data
+        self.__name = name
         self.data_dir = cfg.PATH
         #self.n_class = cfg.NUM_CLASSES
         self.transformer = transformer
-        self.pycocoloader(cfg, data, name)
+        self.pycocoloader(cfg)
 
         data_loader.base.__init__(self, cfg)
         Dataset.__init__(self)
@@ -466,18 +467,25 @@ class coco_base_(Dataset, data_loader.base):
             raise ValueError("choose from [bbox, keypoints, captions]")
         return __prefix
 
-    def get_dataName(self, data, name):
-        if data == 'check':
-            return 'val' + name
-        else:
-            return data + name
+    
+    
+    def get_image_dir(self):
 
-    def pycocoloader(self, cfg, data, name):
+        ret = self.data_dir + '/images/' + self.__data + self.__name + '/'
+        return ret
+
+    def get_anns_dir(self):
+
+        temp = self.__data + self.__name
+        ret = '%sannotations/%s_%s.json'%(self.data_dir, self.prefix, temp)
+        return ret
+
+
+    def pycocoloader(self, cfg):
         
         self.prefix = self.get_prefix(cfg.ANNTYPE) #instances, person_keypoints, captions
-        self.dataName = self.get_dataName(data, name) # train2014
-        self.img_dir = self.data_dir + '/images/' + self.dataName + '/'
-        self.annfname = '%sannotations/%s_%s.json'%(self.data_dir, self.prefix, self.dataName) #
+        self.img_dir = self.get_image_dir()
+        self.annfname = self.get_anns_dir()
         print(self.annfname)
         self.coco = COCO(self.annfname)
         #self.ids_img = []
@@ -627,7 +635,7 @@ class coco_base_(Dataset, data_loader.base):
         img_name = self.coco.imgs[img_id]['file_name']
         img_path = self.img_dir + img_name
 
-        #print(img_id, img_name, img_path)
+        print(img_id, img_name, img_path)
         if os.path.exists(img_path) == False:
             return {"image":None, "bboxes":[], "category_id":[], "keypoints":[]}
 
@@ -782,18 +790,41 @@ class coco2017_(coco_base_specific_):
     def __init__(self, cfg, data='train', transformer=None, cropped=True):
         self.year = "2017"
         super(coco2017_, self).__init__(cfg, data, transformer, name="2017", cropped=cropped)
+        #self.pycocoloader(cfg)
 
 class coco2014_(coco_base_specific_):
     name = 'coco2014'
     def __init__(self, cfg, data='train', transformer=None, cropped=True):
         self.year = "2014"
         super(coco2014_, self).__init__(cfg, data, transformer, name="2014", cropped=cropped)
+        #self.pycocoloader(cfg)
 
 class coco_original(coco_base_specific_):
     name = 'original'
-    def __init__(self, cfg, original_name, data='train', transformer=None, cropped=True):
-        self.year = original_name
+    def __init__(self, cfg, original_name, year, data='train', transformer=None, cropped=True):
+        
+        self.__data = data #
+        self.__name = original_name #
+        self.year = year #
+        
         super(coco_original, self).__init__(cfg, data, transformer, name=original_name, cropped=cropped)
+
+        #self.pycocoloader(cfg)
+
+    def get_image_dir(self):
+
+        ret = self.data_dir + '/images/' + self.__data + self.year + '/'
+        print(ret)
+        return ret
+
+    def get_anns_dir(self):
+
+        dataName = self.__data + self.__name
+        ret = '%sannotations/%s_%s.json'%(self.data_dir, self.prefix, dataName)
+        print(ret)
+        return ret
+
+
 
 
 def x1y1wh_to_xywh(label):
