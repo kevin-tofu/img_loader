@@ -20,6 +20,7 @@ def func_coco2mpii(joints, __map):
 def func_all(coco):
     __ret_img = []
     __map_catID = {}
+    __map_invcatID = {}
     __ret_img = coco.getImgIds()
     cats = coco.loadCats(coco.getCatIds())
     nms = [cat['name'] for cat in cats]
@@ -27,13 +28,16 @@ def func_all(coco):
         #print(cat)
         catIds = coco.getCatIds(catNms=cat)
         __map_catID[int(catIds[-1])] = _loop
+        __map_invcatID[_loop] = int(catIds[-1])
     __map_catID["id"] = "img"
-    return __ret_img, __map_catID
+    return __ret_img, __map_catID, __map_invcatID
     
 
 def func_all_pattern1(coco):
     __ret_img = []
     __map_catID = {}
+    __map_invcatID = {}
+    
     __ret_img = coco.getImgIds()
     cats = coco.loadCats(coco.getCatIds())
 
@@ -43,31 +47,36 @@ def func_all_pattern1(coco):
     for _loop, cat in enumerate(nms):
         catIds = coco.getCatIds(catNms=cat)
         __map_catID[int(catIds[-1])] = _loop
+        __map_invcatID[_loop] = int(catIds[-1])
 
     __map_catID["id"] = "img"
-    return __ret_img, __map_catID
+    return __ret_img, __map_catID, __map_invcatID
 
 
 def func_commercial(coco):
     __ret_img = []
     __map_catID = {}
+    __map_invcatID = {}
     cats = coco.loadCats(coco.getCatIds())
     nms = [cat['name'] for cat in cats]
     for _loop, cat in enumerate(nms):
         catIds = coco.getCatIds(catNms=cat)
         __map_catID[int(catIds[-1])] = _loop
+        __map_invcatID[_loop] = int(catIds[-1])
+
     for _id in coco.getImgIds():
         id_license = coco.imgs[_id]['license']
         if id_license >= 4:
             #ret.append(cc.imgs[i]['id'])
             __ret_img.append(_id)
     __map_catID["id"] = "img"
-    return __ret_img, __map_catID
+    return __ret_img, __map_catID, __map_invcatID
     
 
 def func_keypoints_commercial(coco):
     __ret_ann = []
     __map_catID = {}
+    __map_invcatID = {}
     
     for aid, ann in coco.anns.items():
         if ann['num_keypoints'] > 0:
@@ -76,12 +85,13 @@ def func_keypoints_commercial(coco):
                 __ret_ann.append([aid, ann['image_id']])
 
     __map_catID["id"] = "ann+img"
-    return __ret_ann, __map_catID
+    return __ret_ann, __map_catID, __map_invcatID
 
 
 def func_custom1(coco):
     __ret_img = []
     __map_catID = {}
+    __map_invcatID = {}
     _pickup = 200
     cats = coco.loadCats(coco.getCatIds())
     nms = [cat['name'] for cat in cats]
@@ -91,6 +101,7 @@ def func_custom1(coco):
         catIds = coco.getCatIds(catNms=cat)
         imgIds = coco.getImgIds(catIds=catIds)
         __map_catID[int(catIds[-1])] = _loop
+        __map_invcatID[_loop] = int(catIds[-1])
         #print(_loop, catIds[0])
         #print(cat, len(imgIds))
         if len(imgIds) != 0:
@@ -99,38 +110,42 @@ def func_custom1(coco):
             continue
         __ret_img += np.array(imgIds)[idx].tolist()
     __map_catID["id"] = "img"
-    return __ret_img, __map_catID
+    return __ret_img, __map_catID, __map_invcatID
 
 def func_vehicle(coco):
     __ret_img = []
     __map_catID = {}
+    __map_invcatID ={}
     #cats = coco.loadCats(coco.getCatIds())
     nms = ["truck", "car", "bus"]
     for _loop, cat in enumerate(nms):
         catIds = coco.getCatIds(catNms=cat)
         imgIds = coco.getImgIds(catIds=catIds)
         __map_catID[int(catIds[-1])] = _loop
+        __map_invcatID[_loop] = int(catIds[-1])
         __ret_img += imgIds
     __map_catID["id"] = "img"
-    return __ret_img, __map_catID
+    return __ret_img, __map_catID, __map_invcatID
 
 def func_vehicle_all(coco):
     __ret_img = []
     __map_catID = {}
+    __map_invcatID = {}
     #cats = coco.loadCats(coco.getCatIds())
     nms = ["truck", "car", "bus", "bicycle", "motorcycle", "airplane", "train", "boat"]
     for _loop, cat in enumerate(nms):
         catIds = coco.getCatIds(catNms=cat)
         imgIds = coco.getImgIds(catIds=catIds)
         __map_catID[int(catIds[-1])] = _loop
+        __map_invcatID[_loop] = int(catIds[-1])
         __ret_img += imgIds
     __map_catID["id"] = "img"
-    return __ret_img, __map_catID
+    return __ret_img, __map_catID, __map_invcatID
 
 def func_keypoints(coco):
     __ret_ann = []
     __map_catID = {}
-    
+    __map_invcatID = {}
     for aid, ann in coco.anns.items():
         if ann['num_keypoints'] > 0:
             #__ret_img.append(ann['image_id'])
@@ -138,20 +153,22 @@ def func_keypoints(coco):
             __ret_ann.append([aid, ann['image_id']])
 
     __map_catID["id"] = "ann+img"
-    return __ret_ann, __map_catID
+    return __ret_ann, __map_catID, __map_invcatID
 
 
 def func_person(coco):
     __ret_img = []
     __map_catID = {}
+    __map_invcatID = {}
     nms = ["person"]
     for _loop, cat in enumerate(nms):
         catIds = coco.getCatIds(catNms=cat)
         imgIds = coco.getImgIds(catIds=catIds)
         __map_catID[int(catIds[-1])] = _loop
+        __map_invcatID[_loop] = int(catIds[-1])
         __ret_img += imgIds
     __map_catID["id"] = "img"
-    return __ret_img, __map_catID
+    return __ret_img, __map_catID, __map_invcatID
 
 
 def draw_box(img, target, fmt="xywhc"):
@@ -719,7 +736,7 @@ class coco_base_specific_(coco_base_):
         key = self.ids_image_form
         if key in self.ids_funcs.keys():
             #self.ids_img, self.map_catID = self.ids_funcs[key](self.coco)
-            self.ids, self.map_catID = self.ids_funcs[key](self.coco)
+            self.ids, self.map_catID, self.map_invcatID = self.ids_funcs[key](self.coco)
             #if self.map_catID["id"] == "img":
             #    self.__getitem__ = self.__getitem__img
             #elif self.map_catID["id"] == "ann+img":
