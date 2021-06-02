@@ -102,6 +102,7 @@ cfg.PATH = '/data/public_data/COCO2017/'
 cfg.ANNTYPE = 'bbox'
 #cfg.ANNTYPE = 'keypoint'
 cfg.BATCHSIZE = 32
+cfg.BBOX_CORRECTION = 'normal'
 h, w = 416, 416
 tf = Compose([Resize(h, w, p=1.0)],\
               bbox_params={'format':'coco', 'label_fields':['category_id']})
@@ -136,6 +137,7 @@ cfg = edict()
 cfg.PATH = '/data/public_data/COCO2017/'
 cfg.BATCHSIZE = 32
 cfg.IDS = 'person'
+cfg.BBOX_CORRECTION = 'normal'
 tf = None
 
 cfg.ANNTYPE = 'bbox'
