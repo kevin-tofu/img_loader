@@ -419,8 +419,7 @@ class coco_base_(Dataset, data_loader.base):
             print("get_bboxes")
             self.get_annotation = self.get_bboxes
 
-            self.set_get_bbox = "normal"
-            
+            self.set_get_bbox(cfg)
             
         elif self.anntype == 'keypoints':
             print("get_keypoints")
@@ -432,19 +431,19 @@ class coco_base_(Dataset, data_loader.base):
         self.fmt_keypoint = "COCO"
         self.cvt_keypoint_coco2mpii = []
 
-    @set_get_bbox.setter
-    def set_get_bbox(self, v):
+
+    def set_get_bbox(self, cfg):
         
-        if v == "normal":
+
+        if cfg.BBOX_CORRECTION == "normal":
             self._get_bbox = _get_bbox_normal
-            self.w_coeff = 1.0
-            self.h_coeff = 1.0
+            self.w_coeff = cfg.BBOX_CORRECTION_W
+            self.h_coeff = cfg.BBOX_CORRECTION_H
 
-        elif v == "enlarge":
+        elif cfg.BBOX_CORRECTION == "enlarge":
             self._get_bbox = _get_bbox_enlarge
-            self.w_coeff = 1.0
-            self.h_coeff = 1.2
-
+            self.w_coeff = cfg.BBOX_CORRECTION_W
+            self.h_coeff = cfg.BBOX_CORRECTION_H
         else:
             raise ValueError(v)
 
