@@ -418,6 +418,9 @@ class coco_base_(Dataset, data_loader.base):
         if self.anntype == 'bbox':
             print("get_bboxes")
             self.get_annotation = self.get_bboxes
+
+            self.set_get_bbox = "normal"
+            
             
         elif self.anntype == 'keypoints':
             print("get_keypoints")
@@ -428,6 +431,23 @@ class coco_base_(Dataset, data_loader.base):
         self.fmt_bbox = "COCO"
         self.fmt_keypoint = "COCO"
         self.cvt_keypoint_coco2mpii = []
+
+    @set_get_bbox.setter
+    def set_get_bbox(self, v):
+        
+        if v == "normal":
+            self._get_bbox = _get_bbox_normal
+            self.w_coeff = 1.0
+            self.h_coeff = 1.0
+
+        elif v == "enlarge":
+            self._get_bbox = _get_bbox_enlarge
+            self.w_coeff = 1.0
+            self.h_coeff = 1.2
+
+        else:
+            raise ValueError(v)
+
 
     def initialize_loader(self):
         self.get_ids_image()
@@ -482,23 +502,35 @@ class coco_base_(Dataset, data_loader.base):
         return len(self.ids)
 
 
-    def _get_bbox(self, ann, h_img, w_img):
+    def _get_bbox_normal(self, ann, h_img, w_img):
 
         #xywh (x_center, y_center, width, height)
         x1 = float(ann['bbox'][0])
         y1 = float(ann['bbox'][1])
         w = float(ann['bbox'][2])
-        if False:
-            h = float(ann['bbox'][3])
-        else:
-            h = float(ann['bbox'][3] * 1.2)
-            h = h if (y1 + h) < h_img - 1 else float(h_img - y1 - 1)
+        h = float(ann['bbox'][3])
 
         id_cat = self.map_catID[int(ann['category_id'])]
 
         return [x1, y1, w, h, id_cat]
 
         
+    def _get_bbox_enlarge(self, ann, h_img, w_img):
+
+        
+        #xywh (x_center, y_center, width, height)
+        x1 = float(ann['bbox'][0])
+        y1 = float(ann['bbox'][1])
+        w = float(ann['bbox'][2] * self.w_coeff)
+        h = float(ann['bbox'][3] * self.h_coeff)
+        w = w if (x1 + w) < w_img - 1 else float(w_img - x1 - 1)
+        h = h if (y1 + h) < h_img - 1 else float(h_img - y1 - 1)
+
+        id_cat = self.map_catID[int(ann['category_id'])]
+
+        return [x1, y1, w, h, id_cat]
+        
+
     def get_bboxes(self, img, anns):
         
         #for a in anns:
