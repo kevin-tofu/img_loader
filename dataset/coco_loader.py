@@ -635,7 +635,7 @@ class coco_base_(Dataset, data_loader.base):
         img_name = self.coco.imgs[img_id]['file_name']
         img_path = self.img_dir + img_name
 
-        print(img_id, img_name, img_path)
+        #print(img_id, img_name, img_path)
         if os.path.exists(img_path) == False:
             return {"image":None, "bboxes":[], "category_id":[], "keypoints":[]}
 
