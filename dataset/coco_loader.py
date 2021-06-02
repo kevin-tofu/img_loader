@@ -437,15 +437,15 @@ class coco_base_(Dataset, data_loader.base):
 
         if cfg.BBOX_CORRECTION == "normal":
             self._get_bbox = _get_bbox_normal
-            self.w_coeff = cfg.BBOX_CORRECTION_W
-            self.h_coeff = cfg.BBOX_CORRECTION_H
+            self.w_coeff = 1.0
+            self.h_coeff = 1.0
 
         elif cfg.BBOX_CORRECTION == "enlarge":
             self._get_bbox = _get_bbox_enlarge
             self.w_coeff = cfg.BBOX_CORRECTION_W
             self.h_coeff = cfg.BBOX_CORRECTION_H
         else:
-            raise ValueError(v)
+            raise ValueError(cfg.BBOX_CORRECTION)
 
 
     def initialize_loader(self):
