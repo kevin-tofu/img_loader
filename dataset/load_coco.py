@@ -25,6 +25,18 @@ def get_train(cfg):
                          shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                          worker_init_fn=lambda x: random.seed())
     
+    elif cfg.DATASET.NAME == 'COCO2017_custom1':
+        print('COCO 2017 original')
+
+        export_name = cfg.DATASET.NAME_ANN
+        year = '2017'
+        mode = 'train'
+        #data_ = coco_loader.coco2017_(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
+        data_ = coco_loader.coco_original(cfg.DATASET, export_name, year, data=mode, transformer=None)
+        train = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
+                            shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                            worker_init_fn=lambda x: random.seed())
+
     else:
         raise ValueError(cfg.DATASET.NAME, "")
 
@@ -48,6 +60,17 @@ def get_val(cfg):
         val = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
                          shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                          worker_init_fn=lambda x: random.seed())
+
+    elif cfg.DATASET.NAME == 'COCO2017_custom1':
+        print('COCO 2017 original')
+
+        export_name = cfg.DATASET.NAME_ANN
+        year = '2017'
+        mode = 'val'
+        data_ = coco_loader.coco_original(cfg.DATASET, export_name, year, data=mode, transformer=None)
+        train = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
+                            shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                            worker_init_fn=lambda x: random.seed())
 
     elif cfg.DATASET.NAME == 'cocoCricket':
         print('cocoCricket')
