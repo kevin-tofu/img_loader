@@ -32,7 +32,7 @@ def get_train(cfg):
         year = '2017'
         mode = 'train'
         #data_ = coco_loader.coco2017_(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
-        data_ = coco_loader.coco_original(cfg.DATASET, export_name, year, data=mode, transformer=None)
+        data_ = coco_loader.coco_original(cfg.DATASET, export_name, year, data=mode, transformer=cfg.DATASET.AUGMENTATOR)
         train = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
                             shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                             worker_init_fn=lambda x: random.seed())
