@@ -67,7 +67,7 @@ def get_val(cfg):
         export_name = cfg.DATASET.NAME_ANN
         year = '2017'
         mode = 'val'
-        data_ = coco_loader.coco_original(cfg.DATASET, export_name, year, data=mode, transformer=data_ = coco_loader.coco_original(cfg.DATASET, export_name, year, data=mode, transformer=cfg.DATASET.AUGMENTATOR_val))
+        data_ = coco_loader.coco_original(cfg.DATASET, export_name, year, data=mode, transformer=cfg.DATASET.AUGMENTATOR_val)
         val = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
                             shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                             worker_init_fn=lambda x: random.seed())
