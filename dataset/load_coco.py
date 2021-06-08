@@ -34,8 +34,8 @@ def get_train(cfg):
         #data_ = coco_loader.coco2017_(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
         data_ = coco_loader.coco_original(cfg.DATASET, export_name, year, data=mode, transformer=cfg.DATASET.AUGMENTATOR)
         train = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
-                            shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
-                            worker_init_fn=lambda x: random.seed())
+                           shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                           worker_init_fn=lambda x: random.seed())
 
     else:
         raise ValueError(cfg.DATASET.NAME, "")
@@ -67,9 +67,9 @@ def get_val(cfg):
         export_name = cfg.DATASET.NAME_ANN
         year = '2017'
         mode = 'val'
-        data_ = coco_loader.coco_original(cfg.DATASET, export_name, year, data=mode, transformer=cfg.DATASET.AUGMENTATOR_val)
+        data_ = coco_loader.coco_original(cfg.DATASET, export_name, year, data=mode, transformer=cfg.DATASET.AUGMENTATOR)
         val = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
-                            shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
+                            shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                             worker_init_fn=lambda x: random.seed())
 
     elif cfg.DATASET.NAME == 'cocoCricket':

@@ -171,6 +171,21 @@ def func_person(coco):
     return __ret_img, __map_catID, __map_invcatID
 
 
+
+def func_personANDothers(coco):
+    __ret_img = []
+    __map_catID = {}
+    __map_invcatID = {}
+    nms = ["person", "others"]
+    for _loop, cat in enumerate(nms):
+        catIds = coco.getCatIds(catNms=cat)
+        imgIds = coco.getImgIds(catIds=catIds)
+        __map_catID[int(catIds[-1])] = _loop
+        __map_invcatID[_loop] = int(catIds[-1])
+        __ret_img += imgIds
+    __map_catID["id"] = "img"
+    return __ret_img, __map_catID, __map_invcatID
+
 def draw_box(img, target, fmt="xywhc"):
 
     #from skimage.draw import line
@@ -748,6 +763,7 @@ class coco_base_specific_(coco_base_):
         self.set_ids_function("vehicle", func_vehicle)
         self.set_ids_function("vehicle_all", func_vehicle_all)
         self.set_ids_function("person", func_person)
+        self.set_ids_function("personANDothers", func_personANDothers)
         self.set_ids_function("keypoints", func_keypoints)
         self.set_ids_function("keypoints_commercial", func_keypoints_commercial)
         self.ids_image_form = cfg.IDS #'all', ''
