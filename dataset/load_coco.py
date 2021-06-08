@@ -38,7 +38,7 @@ def get_train(cfg):
                            worker_init_fn=lambda x: random.seed())
 
     else:
-        raise ValueError(cfg.DATASET.NAME, "")
+        raise ValueError(cfg.DATASET.NAME, " you should choose name from 'COCO2017', 'COCO2014', 'original'")
 
     return train
 
@@ -61,7 +61,7 @@ def get_val(cfg):
                          shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                          worker_init_fn=lambda x: random.seed())
 
-    elif cfg.DATASET.NAME == 'COCO2017_custom1':
+    elif cfg.DATASET.NAME == 'original1':
         print('COCO 2017 original')
 
         export_name = cfg.DATASET.NAME_ANN
@@ -80,7 +80,7 @@ def get_val(cfg):
                          shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                          worker_init_fn=lambda x: random.seed())
     else:
-        raise ValueError(cfg.DATASET.NAME, "")
+        raise ValueError(cfg.DATASET.NAME, " you should choose name from 'COCO2017', 'COCO2014', 'original'")
 
     return val
 
