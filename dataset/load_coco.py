@@ -29,7 +29,7 @@ def get_train(cfg):
         print('COCO 2017 original')
 
         export_name = cfg.DATASET.NAME_ANN
-        year = '2017'
+        year = cfg.DATASET.YEAR
         mode = 'train'
         #data_ = coco_loader.coco2017_(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
         data_ = coco_loader.coco_original(cfg.DATASET, export_name, year, data=mode, transformer=cfg.DATASET.AUGMENTATOR)
@@ -65,7 +65,7 @@ def get_val(cfg):
         print('COCO 2017 original')
 
         export_name = cfg.DATASET.NAME_ANN
-        year = '2017'
+        year = cfg.DATASET.YEAR
         mode = 'val'
         data_ = coco_loader.coco_original(cfg.DATASET, export_name, year, data=mode, transformer=cfg.DATASET.AUGMENTATOR)
         val = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
