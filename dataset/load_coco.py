@@ -25,7 +25,7 @@ def get_train(cfg):
                          shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                          worker_init_fn=lambda x: random.seed())
     
-    elif cfg.DATASET.NAME == 'COCO2017_custom1':
+    elif cfg.DATASET.NAME == 'original1':
         print('COCO 2017 original')
 
         export_name = cfg.DATASET.NAME_ANN
