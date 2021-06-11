@@ -291,8 +291,8 @@ class coco_base_(Dataset, data_loader.base):
             self.w_coeff = 1.0
             self.h_coeff = 1.0
 
-        elif cfg.BBOX_CORRECTION == "enlarge":
-            self._get_bbox = self._get_bbox_enlarge
+        elif cfg.BBOX_CORRECTION == "enlarge_person":
+            self._get_bbox = self._get_bbox_enlarge_person
             self.w_coeff = cfg.BBOX_CORRECTION_W
             self.h_coeff = cfg.BBOX_CORRECTION_H
         else:
@@ -372,7 +372,7 @@ class coco_base_(Dataset, data_loader.base):
         return [x1, y1, w, h, id_cat]
 
         
-    def _get_bbox_enlarge(self, ann, h_img, w_img):
+    def _get_bbox_enlarge_person(self, ann, h_img, w_img):
 
         id_cat = self.map_catID[int(ann['category_id'])]
 
