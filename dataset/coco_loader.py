@@ -24,13 +24,22 @@ def func_all(coco):
     __ret_img = coco.getImgIds()
     cats = coco.loadCats(coco.getCatIds())
     nms = [cat['name'] for cat in cats]
+    
+    #coco.dataset['categories']
+    #{'supercategory': 'person', 'id': 1, 'name': 'person'}
+    # filter(lambda person: person['name'] == 'Pam', people)
+    # filter(lambda category: category['name'] == cat, coco.dataset['categories'])
+    new_cat_list = list()
     for _loop, cat in enumerate(nms):
-        #print(cat)
+        
         catIds = coco.getCatIds(catNms=cat)
         __map_catID[int(catIds[-1])] = _loop
         __map_invcatID[_loop] = int(catIds[-1])
+        cat_element = filter(lambda category: category['name'] == cat, coco.dataset['categories'])
+        new_cat_list.append(cat_element[0])
+
     __map_catID["id"] = "img"
-    return __ret_img, __map_catID, __map_invcatID
+    return __ret_img, __map_catID, __map_invcatID, new_cat_list
     
 
 def func_all_pattern1(coco):
@@ -155,7 +164,6 @@ def func_keypoints(coco):
     __map_catID["id"] = "ann+img"
     return __ret_ann, __map_catID, __map_invcatID
 
-
 def func_person(coco):
     __ret_img = []
     __map_catID = {}
@@ -170,6 +178,37 @@ def func_person(coco):
     __map_catID["id"] = "img"
     return __ret_img, __map_catID, __map_invcatID
 
+
+def func_personANDothers2(coco):
+    __ret_img = []
+    __map_catID = {}
+    __map_invcatID = {}
+    __new_cat_list = list()
+
+    __ret_img = coco.getImgIds()
+    cats = coco.loadCats(coco.getCatIds())
+    nms = [cat['name'] for cat in cats]
+    _loop = 0
+
+    #cat_element = {'supercategory': 'person', 'id': 1, 'name': 'person'}
+    cat_element = {'supercategory': 'others', 'id': 2, 'name': 'others'}
+    __new_cat_list.append(cat_element)
+
+    for cat in nms:
+
+        catIds = coco.getCatIds(catNms=cat)
+        if cat == 'person':
+            __map_catID[int(catIds[-1])] = 0
+            __map_invcatID[0] = int(catIds[-1])
+            _loop += 1
+            cat_element = filter(lambda category: category['name'] == cat, coco.dataset['categories'])
+            __new_cat_list.append(cat_element[0])
+        else:
+            __map_catID[int(catIds[-1])] = _loop
+            __map_invcatID[1] = 2
+
+    __map_catID["id"] = "img"
+    return __ret_img, __map_catID, __map_invcatID, __new_cat_list
 
 
 def func_personANDothers(coco):
@@ -764,6 +803,8 @@ class coco_base_specific_(coco_base_):
         self.set_ids_function("vehicle_all", func_vehicle_all)
         self.set_ids_function("person", func_person)
         self.set_ids_function("personANDothers", func_personANDothers)
+        self.set_ids_function("personANDothers2", func_personANDothers2)
+
         self.set_ids_function("keypoints", func_keypoints)
         self.set_ids_function("keypoints_commercial", func_keypoints_commercial)
         self.ids_image_form = cfg.IDS #'all', ''
@@ -791,7 +832,9 @@ class coco_base_specific_(coco_base_):
         key = self.ids_image_form
         if key in self.ids_funcs.keys():
             #self.ids_img, self.map_catID = self.ids_funcs[key](self.coco)
-            self.ids, self.map_catID, self.map_invcatID = self.ids_funcs[key](self.coco)
+            self.ids, self.map_catID, \
+                self.map_invcatID, self.categories_new = self.ids_funcs[key](self.coco)
+            
             #if self.map_catID["id"] == "img":
             #    self.__getitem__ = self.__getitem__img
             #elif self.map_catID["id"] == "ann+img":
