@@ -202,7 +202,7 @@ def func_personANDothers2(coco):
             __map_catID[int(catIds[-1])] = 0
             __map_invcatID[0] = int(catIds[-1])
             _loop += 1
-            cat_element = filter(lambda cat_loop: cat_loop['name'] == cat, coco.dataset['categories'])
+            cat_element = list(filter(lambda cat_loop: cat_loop['name'] == cat, coco.dataset['categories']))
             print(cat_element)
             __new_cat_list.append(cat_element[0])
         else:
