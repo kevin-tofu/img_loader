@@ -193,7 +193,8 @@ def func_personANDothers2(coco):
     #cat_element = {'supercategory': 'person', 'id': 1, 'name': 'person'}
     cat_element = {'supercategory': 'others', 'id': 2, 'name': 'others'}
     __new_cat_list.append(cat_element)
-
+    print(coco.dataset['categories'])
+    
     for cat in nms:
 
         catIds = coco.getCatIds(catNms=cat)
@@ -201,7 +202,7 @@ def func_personANDothers2(coco):
             __map_catID[int(catIds[-1])] = 0
             __map_invcatID[0] = int(catIds[-1])
             _loop += 1
-            cat_element = filter(lambda category: category['name'] == cat, coco.dataset['categories'])
+            cat_element = filter(lambda cat_loop: cat_loop['name'] == cat, coco.dataset['categories'])
             __new_cat_list.append(cat_element[0])
         else:
             __map_catID[int(catIds[-1])] = _loop
