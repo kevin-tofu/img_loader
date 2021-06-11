@@ -7,7 +7,8 @@ from skimage import io
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from dataset import data_loader
 import time
-if __ name__ == '__main__':
+
+if __name__ == '__main__':
     from coco_selection import* 
 else:
     from img_loader.dataset.coco_selection import* 
@@ -373,16 +374,21 @@ class coco_base_(Dataset, data_loader.base):
         
     def _get_bbox_enlarge(self, ann, h_img, w_img):
 
-        
+        id_cat = self.map_catID[int(ann['category_id'])]
+
         #xywh (x_center, y_center, width, height)
         x1 = float(ann['bbox'][0])
         y1 = float(ann['bbox'][1])
-        w = float(ann['bbox'][2] * self.w_coeff)
-        h = float(ann['bbox'][3] * self.h_coeff)
-        w = w if (x1 + w) < w_img - 1 else float(w_img - x1 - 1)
-        h = h if (y1 + h) < h_img - 1 else float(h_img - y1 - 1)
+        
+        if id_cat == 0:
+            w = float(ann['bbox'][2] * self.w_coeff)
+            h = float(ann['bbox'][3] * self.h_coeff)
+            w = w if (x1 + w) < w_img - 1 else float(w_img - x1 - 1)
+            h = h if (y1 + h) < h_img - 1 else float(h_img - y1 - 1)
+        else:
+            w = float(ann['bbox'][2])
+            h = float(ann['bbox'][3])
 
-        id_cat = self.map_catID[int(ann['category_id'])]
 
         return [x1, y1, w, h, id_cat]
         
