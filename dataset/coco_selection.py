@@ -15,6 +15,7 @@ def func_all(coco):
         catIds = coco.getCatIds(catNms=cat)
         __map_catID[int(catIds[-1])] = _loop
         __map_invcatID[_loop] = int(catIds[-1])
+        #print(cat, catIds[0], "_loop", _loop)
 
     __map_catID["id"] = "img"
     return __ret_img, __map_catID, __map_invcatID, coco.dataset['categories']
