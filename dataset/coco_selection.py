@@ -234,7 +234,7 @@ def func_personANDothers2(coco):
     __new_cat_list.append(cat_element)
     print(__map_catID)
     print(__map_invcatID)
-    print(new_cat_list)
+    print(__new_cat_list)
 
     __map_catID["id"] = "img"
     return __ret_img, __map_catID, __map_invcatID, __new_cat_list
