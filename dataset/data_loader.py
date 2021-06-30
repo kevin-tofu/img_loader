@@ -51,12 +51,13 @@ def collate_fn_bbox_x1y1wh(batch):
 
 def collate_fn_keypoints(batch):
 
-    # remove data without keypoints
-    images = [b["image"] for b in batch if len(b["keypoints"][0]) > 0]
-    targets = [b["keypoints"] for b in batch if len(b["keypoints"][0]) > 0]
-    img_id = [b["id_img"] for b in batch if len(b["keypoints"][0]) > 0]
-    center = [b["center"] for b in batch if len(b["keypoints"][0]) > 0]
-    scale = [b["scale"] for b in batch if len(b["keypoints"][0]) > 0]
+    # remove data without 
+    n_valid = 3
+    images = [b["image"] for b in batch if len(b["keypoints"][0]) >= n_valid]
+    targets = [b["keypoints"] for b in batch if len(b["keypoints"][0]) >= n_valid]
+    img_id = [b["id_img"] for b in batch if len(b["keypoints"][0]) >= n_valid]
+    center = [b["center"] for b in batch if len(b["keypoints"][0]) >= n_valid]
+    scale = [b["scale"] for b in batch if len(b["keypoints"][0]) >= n_valid]
     
     return images, (targets, img_id, center, scale)
     #return images, targets

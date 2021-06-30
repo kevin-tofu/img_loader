@@ -550,7 +550,7 @@ class coco_base_(Dataset, data_loader.base):
         if self.fmt_keypoint == "MPII":
             joints_new = func_coco2mpii(joints_new, self.cvt_keypoint_coco2mpii)
 
-        # going to crop images so that ALL keypoints is on cropped image
+        # crop images so that ALL keypoints are inside cropped image
         #ofs = 5
         ofs = 10
         #ofs = 20
