@@ -554,10 +554,10 @@ class coco_base_(Dataset, data_loader.base):
             joints_new = func_coco2mpii(joints_new, self.cvt_keypoint_coco2mpii)
 
         # crop images so that ALL keypoints are inside cropped image
-        if self.crop_type = "fix":
+        if self.crop_type == "fix":
             #ofs = 10
             ofs = self.crop_offset
-        elif self.crop_type = "random":
+        elif self.crop_type == "random":
             ofs = random.randint(0, self.crop_offset)
 
         _x_min = int(max([np.min(joints_new[:, 0]) - ofs, 0]))
