@@ -1,6 +1,8 @@
 
 import sys
 import os
+import random
+
 import numpy as np
 from pycocotools.coco import COCO
 from skimage import io
