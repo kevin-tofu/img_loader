@@ -275,6 +275,9 @@ class coco_base_(Dataset, data_loader.base):
         elif self.anntype == 'keypoints':
             print("get_keypoints")
             self.get_annotation = self.get_keypoints
+            self.crop_type = cfg.CROP_TYPE
+            self.crop_offset = cfg.CROP_OFFSET
+
         self.cropped_coordinate = cropped
         self.iscrowd_exist = True
 
@@ -551,9 +554,12 @@ class coco_base_(Dataset, data_loader.base):
             joints_new = func_coco2mpii(joints_new, self.cvt_keypoint_coco2mpii)
 
         # crop images so that ALL keypoints are inside cropped image
-        #ofs = 5
-        ofs = 10
-        #ofs = 20
+        if self.crop_type = "fix":
+            #ofs = 10
+            ofs = self.crop_offset
+        elif self.crop_type = "random":
+            ofs = random.randint(0, self.crop_offset)
+
         _x_min = int(max([np.min(joints_new[:, 0]) - ofs, 0]))
         _y_min = int(max([np.min(joints_new[:, 1]) - ofs, 0]))
         _x_max = int(min([np.max(joints_new[:, 0]) + ofs, img.shape[1]-1]))
