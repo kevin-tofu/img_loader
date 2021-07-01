@@ -529,13 +529,13 @@ class coco_base_(Dataset, data_loader.base):
         anns = self.coco.loadAnns(ann_id)
         if self.iscrowd_exist == True:
             if int(anns[0]['iscrowd']) != 0:
-                return {"image":None, "bboxes":[], "category_id":[], "keypoints":[]}
+                return {"image":None, "bboxes":[], "category_id":[], "keypoints":[[]]}
 
         img_id = self.ids[i][1]
         img_name = self.coco.imgs[img_id]['file_name']
         img_path = self.img_dir + img_name
         if os.path.exists(img_path) == False:
-            return {"image":None, "bboxes":[], "category_id":[], "keypoints":[]}
+            return {"image":None, "bboxes":[], "category_id":[], "keypoints":[[]]}
 
         else:
             img = io.imread(img_path)
@@ -551,6 +551,9 @@ class coco_base_(Dataset, data_loader.base):
         joints_num = np.array(range(joints.shape[0]))[:, np.newaxis]
         joints = np.concatenate((joints, joints_num), axis = 1)
         joints_new = joints[joints[:, 2] > 0]
+        if joints_new.shape[0] < 2:
+            #print(None)
+            return {"image":None, "bboxes":[], "category_id":[], "keypoints":[[]]}
 
         if self.fmt_keypoint == "MPII":
             joints_new = func_coco2mpii(joints_new, self.cvt_keypoint_coco2mpii)
@@ -566,7 +569,7 @@ class coco_base_(Dataset, data_loader.base):
         _y_min = int(max([np.min(joints_new[:, 1]) - ofs, 0]))
         _x_max = int(min([np.max(joints_new[:, 0]) + ofs, img.shape[1]-1]))
         _y_max = int(min([np.max(joints_new[:, 1]) + ofs, img.shape[0]-1]))
-
+        #print(ofs, np.min(joints_new[:, 0]), np.max(joints_new[:, 0]), _x_min, _x_max)
         center = np.array([_x_min, _y_min])
         scale = np.array([(_x_max - _x_min), (_y_max - _y_min)]) 
 
@@ -574,10 +577,10 @@ class coco_base_(Dataset, data_loader.base):
         if self.cropped_coordinate == True:
             crop = Compose([Crop(x_min=_x_min, y_min=_y_min, x_max=_x_max, y_max=_y_max, always_apply=True)],\
                             keypoint_params=A.KeypointParams(format='xy'))
-            img_cropped = crop(image=img, keypoints=joints)
+            img_cropped = crop(image=img, keypoints=joints_new)
 
         else:
-            img_cropped = {"image":img, "keypoints":joints}
+            img_cropped = {"image":img, "keypoints":joints_new}
 
         if self.transformer is not None:
             augmented = self.transformer(image=img_cropped["image"], keypoints=img_cropped["keypoints"])
