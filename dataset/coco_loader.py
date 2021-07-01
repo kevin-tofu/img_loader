@@ -277,6 +277,7 @@ class coco_base_(Dataset, data_loader.base):
         elif self.anntype == 'keypoints':
             print("get_keypoints")
             self.get_annotation = self.get_keypoints
+            self.filter_num_joints = cfg.FILTER_NUM_JOINTS
             self.crop_type = cfg.CROP_TYPE
             self.crop_offset = cfg.CROP_OFFSET
 
@@ -550,9 +551,12 @@ class coco_base_(Dataset, data_loader.base):
         joints = np.array(anns[0]['keypoints']).reshape((-1, 3))
         joints_num = np.array(range(joints.shape[0]))[:, np.newaxis]
         joints = np.concatenate((joints, joints_num), axis = 1)
-        joints_new = joints[joints[:, 2] > 0]
-        if joints_new.shape[0] < 2:
-            #print(None)
+        joints_new = joints[joints[:, 2] > 0] # conf=0 is so many
+        #joints_new = joints
+        
+        #print(joints_new, joints_new.shape)
+        if joints_new.shape[0] < self.filter_num_joints:
+            #print(joints_new.shape)
             return {"image":None, "bboxes":[], "category_id":[], "keypoints":[[]]}
 
         if self.fmt_keypoint == "MPII":
