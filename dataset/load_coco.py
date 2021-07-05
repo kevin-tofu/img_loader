@@ -25,7 +25,7 @@ def get_train(cfg):
                          shuffle=True, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                          worker_init_fn=lambda x: random.seed())
     
-    elif cfg.DATASET.NAME == 'COCO2017_original1':
+    elif cfg.DATASET.NAME == 'COCO_original':
         print('COCO 2017 original')
 
         export_name = cfg.DATASET.NAME_ANN
@@ -38,7 +38,7 @@ def get_train(cfg):
                            worker_init_fn=lambda x: random.seed())
 
     else:
-        raise ValueError(cfg.DATASET.NAME, " you should choose name from 'COCO2017', 'COCO2014', 'original'")
+        raise ValueError(cfg.DATASET.NAME, "img_loader/load_coco.py" + " you should choose name from 'COCO2017', 'COCO2014', 'COCO_original'")
 
     return train
 
@@ -61,7 +61,7 @@ def get_val(cfg):
                          shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                          worker_init_fn=lambda x: random.seed())
 
-    elif cfg.DATASET.NAME == 'COCO2017_original1':
+    elif cfg.DATASET.NAME == 'COCO_original':
         print('COCO 2017 original')
 
         export_name = cfg.DATASET.NAME_ANN
@@ -72,15 +72,8 @@ def get_val(cfg):
                             shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
                             worker_init_fn=lambda x: random.seed())
 
-    elif cfg.DATASET.NAME == 'cocoCricket':
-        print('cocoCricket')
-        data_ = cricket_loader.cocoCricket(cfg.DATASET, 'train', cfg.DATASET.AUGMENTATOR)
-        #data_ = cricket_loader.cocoCricket(cfg.DATASET, 'val', cfg.DATASET.AUGMENTATOR)
-        val = DataLoader(data_, batch_size=cfg.DATASET.BATCHSIZE,\
-                         shuffle=False, num_workers=cfg.DATASET.WORKERS, collate_fn=data_.collate_fn,
-                         worker_init_fn=lambda x: random.seed())
     else:
-        raise ValueError(cfg.DATASET.NAME, " you should choose name from 'COCO2017', 'COCO2014', 'original'")
+        raise ValueError(cfg.DATASET.NAME, "img_loader/load_coco.py" + " you should choose name from 'COCO2017', 'COCO2014', 'original'")
 
     return val
 
