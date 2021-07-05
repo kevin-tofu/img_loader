@@ -7,6 +7,44 @@ from albumentations.augmentations.transforms import Normalize, ShiftScaleRotate,
 import random
 import numpy as np
 
+def aug_yolov3(resize=416):
+
+    def temp(image_height, image_width):
+        _c_r = (-10, 10)
+        # Crop 60 - 100% of image
+        #crop_scale = (0.3, 1.0)
+        crop_scale = (0.5, 1.0)
+        crop_ratio = (0.75, 1.333)
+        # HSV shift limits
+        hue_shift = 10
+        saturation_shift = 10
+        value_shift = 10
+        fmt = "coco"
+        _c_r = (-10, 10)
+        #resize_to1 = (256*2, 192*2)
+        resize_to2 = (resize, resize)
+
+        # HSV shift limits
+        hue_shift = 10
+        saturation_shift = 10
+        value_shift = 10
+        cst_shift = 8
+
+        #print(image_height, image_width)#, w2h_ratio=0.75
+        return Compose([HorizontalFlip(p=0.5),\
+                        Blur(p=0.2), \
+                        GaussNoise(p=0.7), \
+                        RandomGamma(gamma_limit = (95, 105) , p=0.6), \
+                        RGBShift(r_shift_limit=cst_shift, g_shift_limit=cst_shift, b_shift_limit=cst_shift, p=0.6), \
+                        ChannelShuffle(p=0.4),\
+                        HueSaturationValue(hue_shift, saturation_shift, value_shift, p=0.1),\
+                        ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=35, p=0.5), \
+                        RandomResizedCrop(resize_to2[0], resize_to2[1], scale=crop_scale, ratio=crop_ratio, always_apply=True),\
+                        Normalize(always_apply=True)\
+                        ], \
+                        bbox_params={'format':fmt, 'label_fields':['category_id']})
+    return temp
+                        
 def compose_bbox1(image_height, image_width):
     _c_r = (-10, 10)
     # Crop 60 - 100% of image
