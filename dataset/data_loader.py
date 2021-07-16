@@ -100,6 +100,7 @@ class base(object):
         self.batchsize = cfg.BATCHSIZE
         self.indeces = None
         self.set_keys()
+        self.form = cfg.FORM
         
     @property
     def num_data(self):
