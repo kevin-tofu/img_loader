@@ -49,7 +49,7 @@ def collate_fn_bbox_iwxwhc(batch):
     img_id = [b["id_img"] for b in batch if len(b["bboxes"]) > 0]
     imsize = [b["imsize"] for b in batch if len(b["bboxes"]) > 0]
     
-    return images, (targets2, img_id, imsize)
+    return images, (target2, img_id, imsize)
 
 
 def collate_fn_bbox_x1y1wh(batch):
