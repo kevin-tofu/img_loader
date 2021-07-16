@@ -123,11 +123,12 @@ class base(object):
 
     def set_keys(self):
         self.__keys_bbox = []
-        self.__keys_bbox.append("icxywh_normalized")
-        self.__keys_bbox.append("icxywh")
-        self.__keys_bbox.append("x1y1whc")
+        #self.__keys_bbox.append("icxywh_normalized")
+        #self.__keys_bbox.append("icxywh")
+        #self.__keys_bbox.append("x1y1whc")
         self.__keys_bbox.append("xywhc")
-        self.__keys_bbox.append("xywhc_normalized")
+        self.__keys_bbox.append("ixywhc")
+        #self.__keys_bbox.append("xywhc_normalized")
         self.__keys_keypoints = []
         self.__keys_keypoints.append("xyc")
         self.__keys_keypoints.append("bxyc")
