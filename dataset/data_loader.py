@@ -37,6 +37,21 @@ def collate_fn_bbox(batch):
     return images, (targets, img_id, imsize)
 
 
+def collate_fn_bbox_iwxwhc(batch):
+    import numpy as np
+
+    images = [b["image"] for b in batch if len(b["bboxes"]) > 0]
+    x1y1wh_trans = [b["bboxes"] for b in batch if len(b["bboxes"]) > 0]
+    id_trans = [b["category_id"] for b in batch if len(b["bboxes"]) > 0]
+
+    targets = [np.concatenate([b*np.ones((len(_id), 1)), x1y1wh_to_xywh(_x1y1wh), np.array(_id)[:, np.newaxis]], axis = 1) for b, _x1y1wh, _id in zip(range(len(batch)), x1y1wh_trans, id_trans)]
+    target2 = np.concatenate(targets, axis=0)
+    img_id = [b["id_img"] for b in batch if len(b["bboxes"]) > 0]
+    imsize = [b["imsize"] for b in batch if len(b["bboxes"]) > 0]
+    
+    return images, (targets2, img_id, imsize)
+
+
 def collate_fn_bbox_x1y1wh(batch):
     images = [b["image"] for b in batch if len(b["bboxes"]) > 0]
     x1y1wh = [b["bboxes"] for b in batch if len(b["bboxes"]) > 0]
@@ -122,24 +137,25 @@ class base(object):
 
     @form.setter
     def form(self, v):
+
+        print('annotation form', v)
         if self.anntype == "bbox":
             if v in self.__keys_bbox:
                 self.__form = v
+                if v == "xywhc":
+                    self.collate_fn = collate_fn_bbox
+                elif v == "ixywhc":
+                    self.collate_fn = collate_fn_bbox_iwxwhc
             else:
-                self.__form = "icxywh_normalized"
-                cmt = ""
-                for loop in self.__keys_bbox:
-                    cmt += loop + ", "
-                raise ValueError("choose from " + cmt)
+                raise ValueError("choose from ", self.__keys_bbox)
 
         elif self.anntype == "keypoints":
             if v in self.__keys_keypoints:
                 self.__form = v
+                if v == "keypoints":
+                    self.collate_fn = collate_fn_keypoints
             else:
-                cmt = ""
-                for loop in self.__keys_keypoints:
-                    cmt += loop + ", "
-                raise ValueError("choose from " + cmt)
+                raise ValueError("choose from ", self.__keys_keypoints)
 
     @property
     def anntype(self):
@@ -151,10 +167,6 @@ class base(object):
 
         if v in ["bbox", "keypoints", "captions"]:
             self.__anntype = v
-            if v == "bbox":
-                self.collate_fn = collate_fn_bbox
-            elif v == "keypoints":
-                self.collate_fn = collate_fn_keypoints
         else:
             raise ValueError("choose from [bbox, keypoints, captions]")
         
