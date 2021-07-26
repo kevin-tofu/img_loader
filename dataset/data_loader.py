@@ -46,6 +46,10 @@ def collate_fn_bbox_iwxwhc(batch):
 
     targets = [np.concatenate([b*np.ones((len(_id), 1)), x1y1wh_to_xywh(_x1y1wh), np.array(_id)[:, np.newaxis]], axis = 1) for b, _x1y1wh, _id in zip(range(len(batch)), x1y1wh_trans, id_trans)]
     target2 = np.concatenate(targets, axis=0)
+    if len(targets) > 0:
+        target2 = np.concatenate(targets, axis=0)
+    else:
+        target2 = [None, None, None]
     img_id = [b["id_img"] for b in batch if len(b["bboxes"]) > 0]
     imsize = [b["imsize"] for b in batch if len(b["bboxes"]) > 0]
     
