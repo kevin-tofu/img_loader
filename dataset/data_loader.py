@@ -158,6 +158,7 @@ class base(object):
         elif self.anntype == "keypoints":
             if v in self.__keys_keypoints:
                 self.__form = v
+                self.collate_fn = collate_fn_keypoints
                 if v == "keypoints":
                     self.collate_fn = collate_fn_keypoints
             else:

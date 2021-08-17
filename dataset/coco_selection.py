@@ -1,6 +1,6 @@
 
 
-
+import numpy as np
 
 def func_all(coco):
     __ret_img = []
