@@ -252,7 +252,7 @@ def check_cocoapi(cfg, coco, compose, year):
 from torch.utils.data import DataLoader, Dataset
 import albumentations as A 
 from albumentations import Compose
-from albumentations.augmentations.transforms import Crop
+from albumentations.augmentations.crops.transforms import Crop
 
 class coco_base_(Dataset, data_loader.base):
     def __init__(self, cfg, data='train', transformer=None, name="2017", cropped=True):

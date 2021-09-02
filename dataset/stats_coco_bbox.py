@@ -4,13 +4,14 @@ from pycocotools.coco import COCO
 import numpy as np
 from sklearn.cluster import KMeans
 from skimage import io
+from coco_selection import func_all
 
 def main(args):
 
     fname = args.coco_directory + 'annotations/' + args.coco_file
     cocotool = COCO(fname)
 
-    stats_images(args, cocotool)
+    #stats_images(args, cocotool)
     stats_bbox(args, cocotool)
 
 
@@ -35,9 +36,11 @@ def stats_images(args, cocotool):
 
 def stats_bbox(args, cocotool):
 
-    cats = cocotool.loadCats(cocotool.getCatIds())
+    
+    __ret_img, __map_catID, __map_invcatID, cats = func_all(cocotool)
     nms=[cat['name'] for cat in cats]
-    print(nms)
+
+    print('cat_name:', nms, 'len(nms):', len(nms))
 
     #ann_ids = cocotool.getAnnIds(imgIds=img_id, iscrowd=False)
     img_id = cocotool.getImgIds()
@@ -45,10 +48,12 @@ def stats_bbox(args, cocotool):
     anns = cocotool.loadAnns(ann_ids)
 
     bbox_list = list()
+    cat_list = list()
     for ann in anns:
         #print(ann)
         #print(ann['bbox'])
         bbox_list.append(ann['bbox'])
+        cat_list.append(__map_catID[ann['category_id']])
 
     bbox_list = np.array(bbox_list)
     #kmeans = sklearn.cluster.KMeans(n_clusters=9, init='k-means++', n_init=20, max_iter=300,)
@@ -81,16 +86,39 @@ def stats_bbox(args, cocotool):
     print("center_416_sort_stride : ", 32)
     print(center_416_sort[6:9] / 32)
 
+    import collections, math
+    c = collections.Counter(cat_list)
+    #print(c)
+
+    count = [c[i] for i in range(80)]
+    print('count', count, len(count))
     
+    count_ratio = list()
+    for i, c in enumerate(count):
+        value = c
+        sum_others = 0
+        if i > 0:
+            sum_others += np.sum(np.array(count)[0:i])
+        if i != len(count) - 1:
+            sum_others += np.sum(np.array(count)[(i+1)::])
+
+        print('value / sum_others : ', value, '/', sum_others)
+        #temp = float(value) / float(sum_others)
+        temp = float(sum_others) / float(value)
+        count_ratio.append(round(temp, 1))
+
+    #count_ratio = np.array(count_ratio)
+    print('count_ratio:', count_ratio, len(count_ratio))
 
 
 if __name__ == '__main__':
 
-    __dir_default = '/data/public_data/cricket/data_20210113/'
+    __dir_default = '/data/public_data/COCO2017/'
+    __file_default = 'instances_train2017.json'
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--coco_directory', '-S', type=str, default=__dir_default, help='')
-    parser.add_argument('--coco_file', '-J', type=str, default='instances_train_cricket1.json', help='')
+    parser.add_argument('--coco_file', '-J', type=str, default=__file_default, help='')
     args = parser.parse_args()
 
     main(args)
