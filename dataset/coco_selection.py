@@ -19,7 +19,6 @@ def func_all(coco):
 
     __map_catID["id"] = "img"
     return __ret_img, __map_catID, __map_invcatID, coco.dataset['categories']
-    
 
 def func_all_pattern1(coco):
     __ret_img = []
@@ -66,7 +65,7 @@ def func_commercial(coco):
     return __ret_img, __map_catID, __map_invcatID, coco.dataset['categories']
     
 
-def func_keypoints_commercial(coco):
+def func_keypoint2image_commercial(coco):
     __ret_ann = []
     __map_catID = {}
     __map_invcatID = {}
@@ -150,7 +149,7 @@ def func_vehicle_all(coco):
     return __ret_img, __map_catID, __map_invcatID, __new_cat_list
 
 
-def func_keypoints(coco):
+def func_keypoint_image(coco):
     __ret_ann = []
     __map_catID = {}
     __map_invcatID = {}
@@ -162,6 +161,30 @@ def func_keypoints(coco):
 
     __map_catID["id"] = "ann+img"
     return __ret_ann, __map_catID, __map_invcatID, coco.dataset['categories']
+
+def func_keypoints(coco):
+    __ret_img = []
+    __map_catID = {}
+    __map_invcatID = {}
+    imgids = coco.getImgIds()
+    #cats = coco.loadCats(coco.getCatIds())
+    #nms = [cat['name'] for cat in cats]
+    nms = ["person"]
+    for _loop, cat in enumerate(nms):
+        catIds = coco.getCatIds(catNms=cat)
+        __map_catID[int(catIds[-1])] = _loop
+        __map_invcatID[_loop] = int(catIds[-1])
+
+    __ret_img = list()
+    for loop_id in imgids:
+        anns = coco.getAnnIds(imgIds=loop_id, iscrowd=False)
+        #print(loop_id, len(anns))
+        if len(anns) > 0:
+            __ret_img.append(loop_id)
+
+    print(len(__ret_img))
+    __map_catID["id"] = "img"
+    return __ret_img, __map_catID, __map_invcatID, coco.dataset['categories']
 
 
 def func_person(coco):

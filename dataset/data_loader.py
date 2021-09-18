@@ -14,7 +14,6 @@ def chunks2(l, n):
 	for i in l:
 		yield l[i:i + n]
 
-
 def x1y1wh_to_xywh(label):
     ret = np.copy(label)
     ret[:, 0:2] += ret[:, 2:4] / 2.
@@ -72,20 +71,30 @@ def collate_fn_bbox_x1y1wh(batch):
     
     return images, (targets, img_id, imsize)
 
-
 def collate_fn_keypoints(batch):
 
     # remove data without 
     n_valid = 3
-    images = [b["image"] for b in batch if len(b["keypoints"][0]) >= n_valid]
-    targets = [b["keypoints"] for b in batch if len(b["keypoints"][0]) >= n_valid]
-    img_id = [b["id_img"] for b in batch if len(b["keypoints"][0]) >= n_valid]
-    center = [b["center"] for b in batch if len(b["keypoints"][0]) >= n_valid]
-    scale = [b["scale"] for b in batch if len(b["keypoints"][0]) >= n_valid]
+    images = [b["image"] for b in batch if len(b["keypoints"]) >= n_valid]
+    targets = [b["keypoints"] for b in batch if len(b["keypoints"]) >= n_valid]
+    img_id = [b["id_img"] for b in batch if len(b["keypoints"]) >= n_valid]
+    imsize = [b["imsize"] for b in batch if len(b["keypoints"]) >= n_valid]
+    
+    return images, (targets, img_id, imsize)
+
+def collate_fn_keypoint_image(batch):
+
+    # remove data without 
+    n_valid = 3
+    images = [b["image"] for b in batch if len(b["keypoints"]) >= n_valid]
+    targets = [b["keypoints"] for b in batch if len(b["keypoints"]) >= n_valid]
+    img_id = [b["id_img"] for b in batch if len(b["keypoints"]) >= n_valid]
+    center = [b["center"] for b in batch if len(b["keypoints"]) >= n_valid]
+    scale = [b["scale"] for b in batch if len(b["keypoints"]) >= n_valid]
     
     return images, (targets, img_id, center, scale)
-    #return images, targets
-    
+
+
 def collate_fn_images(batch):
     images = [b["image"] for b in batch if b["image"] is not None]
     imsize = [b["imsize"] for b in batch if b["image"] is not None]
@@ -140,7 +149,7 @@ class base(object):
         #self.__keys_bbox.append("xywhc_normalized")
         self.__keys_keypoints = []
         self.__keys_keypoints.append("xyc")
-        self.__keys_keypoints.append("bxyc")
+        self.__keys_keypoints.append("xycb")
 
     @property
     def form(self):
@@ -158,16 +167,19 @@ class base(object):
                 elif v == "ixywhc":
                     self.collate_fn = collate_fn_bbox_iwxwhc
             else:
-                raise ValueError("choose from ", self.__keys_bbox)
+                raise ValueError("choose value from ", self.__keys_bbox)
 
         elif self.anntype == "keypoints":
             if v in self.__keys_keypoints:
                 self.__form = v
-                self.collate_fn = collate_fn_keypoints
-                if v == "keypoints":
+                if v == "xyc":
+                    self.collate_fn = collate_fn_keypoint_image
+                elif v == "xycb":
                     self.collate_fn = collate_fn_keypoints
+                else:
+                    raise ValueError("choose value from <xyc> or <xycb>", )    
             else:
-                raise ValueError("choose from ", self.__keys_keypoints)
+                raise ValueError("choose value from ", self.__keys_keypoints)
 
     @property
     def anntype(self):
@@ -177,8 +189,8 @@ class base(object):
     def anntype(self, v):
         self.__prefix = 'instances'
 
-        if v in ["bbox", "keypoints", "captions"]:
+        if v in ["bbox", "keypoints", "keypoint_image", "captions"]:
             self.__anntype = v
         else:
-            raise ValueError("choose from [bbox, keypoints, captions]")
+            raise ValueError("choose from [bbox, keypoints, keypoint_image, captions]")
         

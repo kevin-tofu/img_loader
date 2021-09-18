@@ -24,7 +24,7 @@ class aug_keypoints(object):
         self.compose_func = compose_func
 
     def __call__(self, image, keypoints):
-
+        
         compose = self.compose_func(image.shape[0], image.shape[1])
         img_augmented = compose(image=image, keypoints=keypoints)
 
@@ -62,22 +62,25 @@ class aug_keypoints_flipped(object):
 
         compose = self.compose_func(image.shape[0], image.shape[1])
         img_augmented = compose(image=image, keypoints=keypoints)
+        #print(image.shape, img_augmented['image'].shape)
         if random.random() > self.__p:
         #if random.random() > 0.0:
-            key_flipped = []
+            key_flipped = list()
             x_size = img_augmented["image"].shape[1] - 1
+            #for keypoint in img_augmented["keypoints"]:
             for k in img_augmented["keypoints"]:
                 x, y = k[0], k[1]
                 x_new = x_size - x
-                c = k[2]
+                conf = k[2]
+                batch = k[4]
                 if k[3] in self.__right:
-                    j = k[3] - 1
+                    j_new = k[3] - 1
                 elif k[3] in self.__left:
-                    j = k[3] + 1
+                    j_new = k[3] + 1
                 else:
-                    j = k[3]
+                    j_new = k[3]
                 
-                key_flipped.append([x_new, y, c, j])
+                key_flipped.append([x_new, y, conf, j_new, batch])
 
             img_augmented["image"] = img_augmented["image"][:, ::-1]
             img_augmented["keypoints"] = key_flipped
