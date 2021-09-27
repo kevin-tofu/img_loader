@@ -206,6 +206,18 @@ def func_person(coco):
     return __ret_img, __map_catID, __map_invcatID, __new_cat_list
 
 
+def func_person_commercial(coco):
+
+    img_ids, __map_catID, __map_invcatID, __new_cat_list = func_person(coco)
+
+    __ret_img = []
+    for _id in img_ids:
+        id_license = coco.imgs[_id]['license']
+        if id_license >= 4:
+            __ret_img.append(_id)
+
+    return __ret_img, __map_catID, __map_invcatID, __new_cat_list
+
 def func_personANDothers(coco):
     __ret_img = []
     __map_catID = {}

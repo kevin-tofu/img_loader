@@ -233,7 +233,7 @@ class coco_base_(Dataset, data_loader.base):
             return img
 
 
-    def get_bboxes(self, img, anns):
+    def get_bboxes(self, img, anns, transformer):
         
         if self.iscrowd_exist == True:
             labels = [self._get_bbox(a, img.shape[0], img.shape[1]) for a in anns \
@@ -250,8 +250,8 @@ class coco_base_(Dataset, data_loader.base):
         if len(labels) > 0:
             
             labels = np.array(labels)
-            if self.transformer is not None:
-                augmented = self.transformer(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
+            if transformer is not None:
+                augmented = transformer(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
             else:
                 augmented = dict(image=img, bboxes = labels[:, 0:4], category_id = labels[:, 4])
 
