@@ -14,7 +14,7 @@ def func_all(coco):
         
         catIds = coco.getCatIds(catNms=cat)
         __map_catID[int(catIds[-1])] = _loop
-        __map_invcatID[_loop] = int(catIds[-1])
+        __map_invcatID[str(int(_loop))] = int(catIds[-1])
         #print(cat, catIds[0], "_loop", _loop)
 
     __map_catID["id"] = "img"
@@ -35,7 +35,7 @@ def func_all_pattern1(coco):
     for _loop, cat in enumerate(nms):
         catIds = coco.getCatIds(catNms=cat)
         __map_catID[int(catIds[-1])] = _loop
-        __map_invcatID[_loop] = int(catIds[-1])
+        __map_invcatID[str(int(_loop))] = int(catIds[-1])
         cat_element = list(filter(lambda cat_loop: cat_loop['name'] == cat, coco.dataset['categories']))
         __new_cat_list.append(cat_element[0])
 
@@ -54,7 +54,7 @@ def func_commercial(coco):
     for _loop, cat in enumerate(nms):
         catIds = coco.getCatIds(catNms=cat)
         __map_catID[int(catIds[-1])] = _loop
-        __map_invcatID[_loop] = int(catIds[-1])
+        __map_invcatID[str(int(_loop))] = int(catIds[-1])
 
     for _id in coco.getImgIds():
         id_license = coco.imgs[_id]['license']
@@ -93,7 +93,7 @@ def func_custom1(coco):
         catIds = coco.getCatIds(catNms=cat)
         imgIds = coco.getImgIds(catIds=catIds)
         __map_catID[int(catIds[-1])] = _loop
-        __map_invcatID[_loop] = int(catIds[-1])
+        __map_invcatID[str(int(_loop))] = int(catIds[-1])
         #print(_loop, catIds[0])
         #print(cat, len(imgIds))
         if len(imgIds) != 0:
@@ -117,7 +117,7 @@ def func_vehicle(coco):
         imgIds = coco.getImgIds(catIds=catIds)
 
         __map_catID[int(catIds[-1])] = _loop
-        __map_invcatID[_loop] = int(catIds[-1])
+        __map_invcatID[str(int(_loop))] = int(catIds[-1])
         __ret_img += imgIds
 
         cat_element = list(filter(lambda cat_loop: cat_loop['name'] == cat, coco.dataset['categories']))
@@ -139,7 +139,7 @@ def func_vehicle_all(coco):
         catIds = coco.getCatIds(catNms=cat)
         imgIds = coco.getImgIds(catIds=catIds)
         __map_catID[int(catIds[-1])] = _loop
-        __map_invcatID[_loop] = int(catIds[-1])
+        __map_invcatID[str(int(_loop))] = int(catIds[-1])
         cat_element = list(filter(lambda cat_loop: cat_loop['name'] == cat, coco.dataset['categories']))
         __new_cat_list.append(cat_element[0])
 
@@ -173,7 +173,7 @@ def func_keypoints(coco):
     for _loop, cat in enumerate(nms):
         catIds = coco.getCatIds(catNms=cat)
         __map_catID[int(catIds[-1])] = _loop
-        __map_invcatID[_loop] = int(catIds[-1])
+        __map_invcatID[str(int(_loop))] = int(catIds[-1])
 
     __ret_img = list()
     for loop_id in imgids:
@@ -197,7 +197,7 @@ def func_person(coco):
         catIds = coco.getCatIds(catNms=cat)
         imgIds = coco.getImgIds(catIds=catIds)
         __map_catID[int(catIds[-1])] = _loop
-        __map_invcatID[_loop] = int(catIds[-1])
+        __map_invcatID[str(int(_loop))] = int(catIds[-1])
         cat_element = list(filter(lambda cat_loop: cat_loop['name'] == cat, coco.dataset['categories']))
         __new_cat_list.append(cat_element[0])
 
@@ -229,7 +229,7 @@ def func_personANDothers(coco):
         catIds = coco.getCatIds(catNms=cat)
         imgIds = coco.getImgIds(catIds=catIds)
         __map_catID[int(catIds[-1])] = _loop
-        __map_invcatID[_loop] = int(catIds[-1])
+        __map_invcatID[str(int(_loop))] = int(catIds[-1])
         cat_element = list(filter(lambda cat_loop: cat_loop['name'] == cat, coco.dataset['categories']))
         __new_cat_list.append(cat_element[0])
 
@@ -255,14 +255,14 @@ def func_personANDothers2(coco):
         catIds = coco.getCatIds(catNms=cat)
         if cat == 'person':
             __map_catID[int(catIds[-1])] = 0
-            __map_invcatID[0] = int(catIds[-1])
+            __map_invcatID[str(0)] = int(catIds[-1])
             _loop += 1
 
             cat_element = list(filter(lambda cat_loop: cat_loop['name'] == cat, coco.dataset['categories']))
             __new_cat_list.append(cat_element[0])
         else:
             __map_catID[int(catIds[-1])] = _loop
-            __map_invcatID[1] = 2
+            __map_invcatID[str(1)] = 2
 
     #cat_element = {'supercategory': 'person', 'id': 1, 'name': 'person'}
     cat_element = {'supercategory': 'others', 'id': 2, 'name': 'others'}

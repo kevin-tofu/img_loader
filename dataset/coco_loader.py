@@ -270,7 +270,7 @@ class coco_base_(Dataset, data_loader.base):
                 augmented = {"image":img, "bboxes":[], "category_id":[]}
 
         else:
-            #print("no labels")
+            print("no labels")
             augmented = {"image":img, "bboxes":[], "category_id":[]}
 
         return augmented
