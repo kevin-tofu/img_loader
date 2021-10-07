@@ -218,6 +218,7 @@ def func_person_commercial(coco):
 
     return __ret_img, __map_catID, __map_invcatID, __new_cat_list
 
+
 def func_personANDothers(coco):
     __ret_img = []
     __map_catID = {}

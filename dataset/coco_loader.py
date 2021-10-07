@@ -94,15 +94,24 @@ class coco_base_(Dataset, data_loader.base):
         if self.anntype == 'bbox':
             print("get_bboxes")
             self.get_annotation = self.get_bboxes
-
-            self.set_get_bbox(cfg)
+            self.filter_BboxAnnotation = self.filter_BboxAnnotation_normal
             
+            self.set_get_bbox(cfg)
+
+        elif self.anntype == 'bbox_keyfilter':
+            self.get_annotation = self.get_bboxes
+            self.filter_BboxAnnotation = self.filter_BboxAnnotation_keyfilter
+            self.th_keypoints = cfg.FILTER_KEYPOINT
+            self.set_get_bbox(cfg)
+
         elif self.anntype == 'keypoints':
             print("get_keypoints")
             self.get_annotation = self.get_keypoints
             self.filter_num_joints = cfg.FILTER_NUM_JOINTS
             self.crop_type = cfg.CROP_TYPE
             self.crop_offset = cfg.CROP_OFFSET
+
+
 
         self.cropped_coordinate = cropped
         self.iscrowd_exist = True
@@ -138,6 +147,8 @@ class coco_base_(Dataset, data_loader.base):
         if v == "bbox":
             __prefix = 'instances'
         elif v == "keypoints":
+            __prefix = 'person_keypoints'
+        elif v == "bbox_keyfilter":
             __prefix = 'person_keypoints'
         elif v == "captions":
             __prefix = 'captions'
@@ -199,11 +210,8 @@ class coco_base_(Dataset, data_loader.base):
     def _get_bbox_enlarge_person(self, ann, h_img, w_img):
 
         id_cat = self.map_catID[int(ann['category_id'])]
-
-        #xywh (x_center, y_center, width, height)
         x1 = float(ann['bbox'][0])
         y1 = float(ann['bbox'][1])
-        
         if id_cat == 0:
             w = float(ann['bbox'][2] * self.w_coeff)
             h = float(ann['bbox'][3] * self.h_coeff)
@@ -212,10 +220,35 @@ class coco_base_(Dataset, data_loader.base):
         else:
             w = float(ann['bbox'][2])
             h = float(ann['bbox'][3])
-
-
         return [x1, y1, w, h, id_cat]
-        
+
+
+    def filter_BboxAnnotation_normal(self, a):
+
+        if self.iscrowd_exist == True:
+            if (len(a['bbox']) > 0) and (int(a['iscrowd']) == 0) and (int(a['category_id']) in self.map_catID.keys()):
+                return True
+            else:
+                return False
+        else:
+            if (len(a['bbox']) > 0) and (int(a['category_id']) in self.map_catID.keys()):
+                return True
+            else:
+                return False
+
+    def filter_BboxAnnotation_keyfilter(self, a):
+
+        keypoints = np.array(a['keypoints']).reshape((-1, 3))
+        num_keypoints = (keypoints[:, 2] > 0.1).sum()
+
+        #print(num_keypoints)
+        if num_keypoints >= self.th_keypoints:
+            if (len(a['bbox']) > 0) and (int(a['iscrowd']) == 0) and (int(a['category_id']) in self.map_catID.keys()):
+                return True
+            else:
+                return False
+        else:
+            return False
 
     def get_img(self, img_id):
         #img_id = self.coco.getImgIds(imgIds=_id)
@@ -235,15 +268,8 @@ class coco_base_(Dataset, data_loader.base):
 
     def get_bboxes(self, img, anns, transformer):
         
-        if self.iscrowd_exist == True:
-            labels = [self._get_bbox(a, img.shape[0], img.shape[1]) for a in anns \
-                    if (len(a['bbox']) > 0) and (int(a['iscrowd']) == 0) and (int(a['category_id']) in self.map_catID.keys())]
-
-        else:
-            labels = [self._get_bbox(a, img.shape[0], img.shape[1]) for a in anns \
-                    if (len(a['bbox']) > 0) and (int(a['category_id']) in self.map_catID.keys())]
-
-
+        
+        labels = [self._get_bbox(a, img.shape[0], img.shape[1]) for a in anns if self.filter_BboxAnnotation(a)]
         if len(labels) > 0:
             labels = [ls for ls in labels if (ls[2] > 5.) and (ls[3] > 5.)]
             
@@ -436,6 +462,7 @@ class coco_base_specific_(coco_base_):
         self.set_ids_function("vehicle", func_vehicle)
         self.set_ids_function("vehicle_all", func_vehicle_all)
         self.set_ids_function("person", func_person)
+        self.set_ids_function("person_commercial", func_person_commercial)
         self.set_ids_function("personANDothers", func_personANDothers)
         self.set_ids_function("personANDothers2", func_personANDothers2)
         self.set_ids_function("personANDothers2_commercial", func_personANDothers2_commercial)

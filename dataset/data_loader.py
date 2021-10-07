@@ -158,13 +158,13 @@ class base(object):
     def form(self, v):
 
         print('annotation form', v)
-        if self.anntype == "bbox":
+        if self.anntype == "bbox" or self.anntype == "bbox_keyfilter":
             if v in self.__keys_bbox:
                 self.__form = v
                 if v == "xywhc":
                     self.collate_fn = collate_fn_bbox
                 elif v == "ixywhc":
-                    self.collate_fn = collate_fn_bbox_iwxwhc
+                    self.collate_fn = collate_fn_bbox_ixywhc
             else:
                 raise ValueError("choose value from ", self.__keys_bbox)
 
@@ -188,8 +188,8 @@ class base(object):
     def anntype(self, v):
         self.__prefix = 'instances'
 
-        if v in ["bbox", "keypoints", "keypoint_image", "captions"]:
+        if v in ["bbox", "keypoints", "bbox_keyfilter", "captions"]:
             self.__anntype = v
         else:
-            raise ValueError("choose from [bbox, keypoints, keypoint_image, captions]")
+            raise ValueError("choose from [bbox, keypoints, bbox_keyfilter, captions]")
         
