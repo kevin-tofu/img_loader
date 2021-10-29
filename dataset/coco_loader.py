@@ -110,6 +110,7 @@ class coco_base_(Dataset, data_loader.base):
             self.filter_num_joints = cfg.FILTER_NUM_JOINTS
             self.crop_type = cfg.CROP_TYPE
             self.crop_offset = cfg.CROP_OFFSET
+            self.set_get_bbox(cfg)
 
 
 
@@ -130,6 +131,10 @@ class coco_base_(Dataset, data_loader.base):
 
         elif cfg.BBOX_CORRECTION == "enlarge_person":
             self._get_bbox = self._get_bbox_enlarge_person
+            self.w_coeff = cfg.BBOX_CORRECTION_W
+            self.h_coeff = cfg.BBOX_CORRECTION_H
+        elif cfg.BBOX_CORRECTION == "enlarge_random":
+            self._get_bbox = self._get_bbox_enlarge_random
             self.w_coeff = cfg.BBOX_CORRECTION_W
             self.h_coeff = cfg.BBOX_CORRECTION_H
         else:
@@ -206,7 +211,33 @@ class coco_base_(Dataset, data_loader.base):
 
         return [x1, y1, w, h, id_cat]
 
+    def _get_bbox_enlarge_base(self, ann, h_img, w_img, h_coeff, w_coeff):
+
+        x1 = float(ann['bbox'][0])
+        y1 = float(ann['bbox'][1])
+        w = float(ann['bbox'][2] * w_coeff)
+        h = float(ann['bbox'][3] * h_coeff)
+            
+        x1 = x1 + w * (1.0 - w_coeff) / 2.
+        y1 = y1 + h * (1.0 - h_coeff) / 2.
+        x1 = x1 if x1 > 0 else 0
+        y1 = y1 if y1 > 0 else 0
+        w_temp = w * w_coeff
+        h_temp = h * h_coeff
+        w = w_temp if (x1 + w_temp) < w_img - 1 else float(w_img - x1 - 1)
+        h = h_temp if (y1 + h_temp) < h_img - 1 else float(h_img - y1 - 1)
         
+        return [x1, y1, w, h]
+    
+    def _get_bbox_enlarge(self, ann, h_img, w_img):
+        return self._get_bbox_enlarge_base(ann, h_img, w_img, self.h_coeff, self.w_coeff)
+
+    def _get_bbox_enlarge_random(self, ann, h_img, w_img):
+        
+        multi_h = random.uniform(1.0, self.h_coeff)
+        multi_w = random.uniform(1.0, self.w_coeff)
+        return self._get_bbox_enlarge_base(ann, h_img, w_img, multi_h, multi_w)
+
     def _get_bbox_enlarge_person(self, ann, h_img, w_img):
 
         id_cat = self.map_catID[int(ann['category_id'])]
@@ -215,6 +246,10 @@ class coco_base_(Dataset, data_loader.base):
         if id_cat == 0:
             w = float(ann['bbox'][2] * self.w_coeff)
             h = float(ann['bbox'][3] * self.h_coeff)
+            x1 = x1 + w * (1.0 - self.w_coeff) / 2.
+            y1 = y1 + h * (1.0 - self.h_coeff) / 2.
+            x1 = x1 if x1 > 0 else 0
+            y1 = y1 if y1 > 0 else 0
             w = w if (x1 + w) < w_img - 1 else float(w_img - x1 - 1)
             h = h if (y1 + h) < h_img - 1 else float(h_img - y1 - 1)
         else:
@@ -396,34 +431,18 @@ class coco_base_(Dataset, data_loader.base):
         if len(data["keypoints"]) == 0:
             return {"image":None, "bboxes":[], "category_id":[], "keypoints":[[]]}
 
-        if self.fmt_keypoint == "MPII":
-            data['keypoints'] = func_coco2mpii(data['keypoints'], self.cvt_keypoint_coco2mpii)
-
-        # crop images so that ALL keypoints are inside cropped image
-        if self.crop_type == "fix":
-            #ofs = 10
-            ofs = self.crop_offset
-        elif self.crop_type == "random":
-            ofs = random.randint(0, self.crop_offset)
-
-        #print(joints_new)
-        _x_min = int(max([np.min(joints_new[:, 0]) - ofs, 0]))
-        _y_min = int(max([np.min(joints_new[:, 1]) - ofs, 0]))
-        _x_max = int(min([np.max(joints_new[:, 0]) + ofs, img.shape[1]-1]))
-        _y_max = int(min([np.max(joints_new[:, 1]) + ofs, img.shape[0]-1]))
-        #print(ofs, np.min(joints_new[:, 0]), np.max(joints_new[:, 0]), _x_min, _x_max)
+        bbox4keys = self._get_bbox(anns[0], img.shape[0], img.shape[1])
+        _x_min = int(bbox4keys[0])
+        _y_min = int(bbox4keys[1])
+        _x_max = int(_x_min + bbox4keys[2])
+        _y_max = int(_y_min + bbox4keys[3])
         center = np.array([_x_min, _y_min])
         scale = np.array([(_x_max - _x_min), (_y_max - _y_min)]) 
 
-        #print(img, img.shape)
-        #print("self.cropped_coordinate : ", self.cropped_coordinate)
-        #print(_x_min, _y_min, _x_max, _y_max)
         if self.cropped_coordinate == True:
-            #print(joints_new)
             crop = Compose([Crop(x_min=_x_min, y_min=_y_min, x_max=_x_max, y_max=_y_max, always_apply=True)],\
                             keypoint_params=A.KeypointParams(format='xy'))
             img_cropped = crop(image=img, keypoints=joints_new)
-            #print(img_cropped['image'].shape)
 
         else:
             img_cropped = {"image":img, "keypoints":joints_new}
@@ -431,15 +450,14 @@ class coco_base_(Dataset, data_loader.base):
         if self.transformer is not None:
             #augmented = self.transformer(image=img_cropped["image"], keypoints=img_cropped["keypoints"])
             augmented = self.transformer(img_cropped["image"], img_cropped["keypoints"])
-            #augmented["keypoints"] = [augmented["keypoints"]]
+            augmented["keypoints"] = [augmented["keypoints"]]
             augmented["id_img"] = img_id
             augmented["center"] = center
             augmented["scale"] = scale
 
         else:
-            #img_cropped["keypoints"] = img_cropped["keypoints"]
             augmented = {"image":img_cropped["image"], \
-                         "keypoints":img_cropped["keypoints"],
+                         "keypoints":[img_cropped["keypoints"]],\
                          "id_img":img_id,
                          "center":None,
                          "scale":None}

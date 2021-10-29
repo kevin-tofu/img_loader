@@ -158,9 +158,13 @@ def func_keypoint_image(coco):
             #__ret_img.append(ann['image_id'])
             #__ret_ann.append(aid)
             __ret_ann.append([aid, ann['image_id']])
-
+    for _loop, cat in enumerate(nms):
+        catIds = coco.getCatIds(catNms=cat)
+        __map_catID[int(catIds[-1])] = _loop
+        __map_invcatID[str(int(_loop))] = int(catIds[-1])
     __map_catID["id"] = "ann+img"
     return __ret_ann, __map_catID, __map_invcatID, coco.dataset['categories']
+
 
 def func_keypoints(coco):
     __ret_img = []

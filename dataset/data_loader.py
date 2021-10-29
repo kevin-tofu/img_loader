@@ -85,11 +85,11 @@ def collate_fn_keypoint_image(batch):
 
     # remove data without 
     n_valid = 3
-    images = [b["image"] for b in batch if len(b["keypoints"]) >= n_valid]
-    targets = [b["keypoints"] for b in batch if len(b["keypoints"]) >= n_valid]
-    img_id = [b["id_img"] for b in batch if len(b["keypoints"]) >= n_valid]
-    center = [b["center"] for b in batch if len(b["keypoints"]) >= n_valid]
-    scale = [b["scale"] for b in batch if len(b["keypoints"]) >= n_valid]
+    images = [b["image"] for b in batch if len(b["keypoints"][0]) >= n_valid]
+    targets = [b["keypoints"] for b in batch if len(b["keypoints"][0]) >= n_valid]
+    img_id = [b["id_img"] for b in batch if len(b["keypoints"][0]) >= n_valid]
+    center = [b["center"] for b in batch if len(b["keypoints"][0]) >= n_valid]
+    scale = [b["scale"] for b in batch if len(b["keypoints"][0]) >= n_valid]
     
     return images, (targets, img_id, center, scale)
 

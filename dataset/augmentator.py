@@ -1,9 +1,3 @@
-
-#import albumentations as A 
-#from albumentations import Compose
-#from albumentations.augmentations.transforms import Resize, HorizontalFlip, RandomSizedCrop, HueSaturationValue
-#from albumentations.augmentations.transforms import RandomGamma, Blur, RGBShift, GaussNoise, ChannelShuffle
-#from albumentations.augmentations.transforms import Normalize, ShiftScaleRotate,ChannelShuffle, RandomResizedCrop
 import random
 import numpy as np
 
