@@ -328,11 +328,14 @@ class coco_base_(Dataset, data_loader.base):
                 augmented["bboxes"] = temp[:, 0:4]
                 augmented["category_id"] = temp[:, 4]
             else:
-                augmented = {"image":img, "bboxes":[], "category_id":[]}
+                augmented = {"image":augmented["image"], "bboxes":[], "category_id":[]}
 
         else:
-            print("no labels")
-            augmented = {"image":img, "bboxes":[], "category_id":[]}
+            if transformer is not None:
+                augmented = transformer(image=img, bboxes = [], category_id = [])
+                augmented = {"image":augmented["image"], "bboxes":[], "category_id":[]}
+            else:
+                augmented = {"image":img, "bboxes":[], "category_id":[]}
 
         return augmented
 
@@ -402,7 +405,8 @@ class coco_base_(Dataset, data_loader.base):
         anns = self.coco.loadAnns(ann_ids)
         data = self.get_annotation(img, anns, self.transformer)
         data["id_img"] = img_id
-        data["imsize"] = (img_shape[1], img_shape[0]) # width, height
+        # data["imsize"] = (img_shape[1], img_shape[0]) # width, height
+        data["imsize"] = (img_shape[0], img_shape[1]) # height, width 
 
         return data
 
