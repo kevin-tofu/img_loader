@@ -78,11 +78,11 @@ def draw_box(img, target, fmt="xywhc"):
 
 
 class coco_base_(Dataset, data_loader.base):
-    def __init__(self, cfg, data='train', transformer=None, name="2017", cropped=True):
+    def __init__(self, cfg, data='train', transformer=None):
         
         self.anntype = cfg.ANNTYPE
         self.__data = data
-        self.__name = name
+        self.__name = cfg.NAME
         self.data_dir = cfg.PATH
         #self.n_class = cfg.NUM_CLASSES
         self.transformer = transformer
@@ -472,9 +472,9 @@ class coco_base_(Dataset, data_loader.base):
 
 class coco_base_specific_(coco_base_):
 
-    def __init__(self, cfg, data='train', transformer = None, name="2017", cropped=True):
+    def __init__(self, cfg, data='train', transformer = None):
         
-        super(coco_base_specific_, self).__init__(cfg, data, transformer, name=name, cropped=cropped)
+        super(coco_base_specific_, self).__init__(cfg, data, transformer)
         self.ids_funcs = {}
         self.set_ids_function("all", func_all)
         self.set_ids_function("commercial", func_commercial)
@@ -529,29 +529,16 @@ class coco_base_specific_(coco_base_):
             raise ValueError("set ids_image_form correctly")
 
 
-class coco2017_(coco_base_specific_):
-    name = 'coco2017'
-    def __init__(self, cfg, data='train', transformer=None, cropped=True):
-        self.year = "2017"
-        super(coco2017_, self).__init__(cfg, data, transformer, name="2017", cropped=cropped)
-        #self.pycocoloader(cfg)
-
-class coco2014_(coco_base_specific_):
-    name = 'coco2014'
-    def __init__(self, cfg, data='train', transformer=None, cropped=True):
-        self.year = "2014"
-        super(coco2014_, self).__init__(cfg, data, transformer, name="2014", cropped=cropped)
-        #self.pycocoloader(cfg)
-
 class coco_original(coco_base_specific_):
     name = 'original'
-    def __init__(self, cfg, original_name, year, data='train', transformer=None, cropped=True):
+    def __init__(self, cfg, data='train', transformer=None):
         
         self.__data = data #
         self.__name = original_name #
         self.year = year #
         
-        super(coco_original, self).__init__(cfg, data, transformer, name=original_name, cropped=cropped)
+        super(coco_original, self).__init__(cfg, data, transformer)
+        # super(coco_original, self).__init__(cfg, data, transformer, name=original_name, cropped=cropped)
 
         #self.pycocoloader(cfg)
 
