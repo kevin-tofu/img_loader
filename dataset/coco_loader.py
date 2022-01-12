@@ -401,7 +401,7 @@ class coco_base_(Dataset, data_loader.base):
         else:
             img_shape = img.shape
 
-        ann_ids = self.coco.getAnnIds(imgIds=img_id, iscrowd=False)
+        ann_ids = self.coco.getAnnIds(imgIds=[img_id], iscrowd=False)
         anns = self.coco.loadAnns(ann_ids)
         data = self.get_annotation(img, anns, self.transformer)
         data["id_img"] = img_id
@@ -534,7 +534,7 @@ class coco_original(coco_base_specific_):
     def __init__(self, cfg, data='train', transformer=None):
         
         self.__data = data #
-        self.__name = original_name #
+        self.__name = coco_original.name #
         self.year = year #
         
         super(coco_original, self).__init__(cfg, data, transformer)
